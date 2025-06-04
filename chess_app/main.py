@@ -97,7 +97,7 @@ def main():
         QMessageBox.critical(
             None,
             "Application Error",
-            f"An critical error occurred while starting the application: {e}"
+            f"A critical error occurred while starting the application: {e}"
         )
         sys.exit(1)
 
