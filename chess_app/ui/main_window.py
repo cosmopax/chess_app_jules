@@ -132,7 +132,12 @@ class MainWindow(QMainWindow):
         if current_state == EngineState.ANALYZING:
             logger.info("UI: Requesting to stop analysis.")
             self.status_label.setText("Status: Stopping analysis...")
-            self.engine_worker.stop_analysis() # This is a blocking call
+            stopped_cleanly = self.engine_worker.stop_analysis() # This is a blocking call
+            if not stopped_cleanly:
+                QMessageBox.warning(self,
+                                    "Analysis Stop Issue",
+                                    "The analysis engine did not confirm stopping in time. "
+                                    "Its state has been reset, but it might not have stopped cleanly.")
             # State update will be handled by update_ui_from_engine_state
         elif current_state == EngineState.IDLE:
             logger.info("UI: Requesting to start analysis.")
@@ -240,7 +245,7 @@ class MainWindow(QMainWindow):
             # This state is usually brief due to blocking call, status set in request_engine_move_clicked
             self.status_label.setText("Status: Engine is thinking...")
         elif state == EngineState.SHUTDOWN:
-            self.status_label.setText("Status: Engine shutdown.")
+            self.status_label.setText("Status: Engine offline or error. Check config/restart.")
         else:
             self.status_label.setText(f"Status: Engine state {state.name}")
 
@@ -271,7 +276,6 @@ class MainWindow(QMainWindow):
             self.start_analysis_button.setText("Start Analysis")
             self.start_analysis_button.setEnabled(False)
             self.request_move_button.setEnabled(False)
-            self.status_label.setText("Status: Engine Offline.")
 
         # Also consider self.is_engine_thinking_ui_flag for immediate UI responsiveness
         # before state officially changes via timer.
