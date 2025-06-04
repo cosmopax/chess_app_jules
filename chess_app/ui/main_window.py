@@ -1,10 +1,25 @@
 import sys
 import logging
-from PySide6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget,
-                               QPushButton, QTextEdit, QLabel, QAction, QMessageBox)
+from PySide6.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QVBoxLayout,
+    QHBoxLayout,
+    QWidget,
+    QPushButton,
+    QTextEdit,
+    QLabel,
+    QAction,
+    QMessageBox,
+    QInputDialog,
+)
 from PySide6.QtCore import Qt, QTimer, Signal, Slot, QObject
+import random
 import chess
 import chess.svg
+import chess.polyglot
+import chess.openings
+from chess_app.ui.chess_clock import ChessClock
 
 # Assuming EngineWorker is in chess_app.engine.engine_worker
 # Adjust the import path if your project structure is different.
@@ -29,8 +44,12 @@ class MainWindow(QMainWindow):
         self.setGeometry(100, 100, 800, 600)
 
         self.board = chess.Board()
-        self.engine_worker = None # Will be initialized later
+        self.engine_worker = None  # Will be initialized later
         self.engine_path = engine_path
+
+        # Chess clock (5 minutes default)
+        self.clock = ChessClock(initial_seconds=300)
+        self.clock.time_changed.connect(self.update_clock_labels)
 
         # UI Flags (to be reviewed based on EngineWorker state)
         self.is_engine_thinking_ui_flag = False # UI's perception, should sync with EngineState.THINKING
@@ -38,6 +57,7 @@ class MainWindow(QMainWindow):
 
         self._init_ui()
         self._create_menu()
+        self.reset_board()
 
         try:
             logger.info(f"Initializing EngineWorker with path: {self.engine_path}")
@@ -80,6 +100,18 @@ class MainWindow(QMainWindow):
         self.analysis_display.setFixedHeight(100)
         self.layout.addWidget(self.analysis_display)
 
+        # Opening info
+        self.opening_label = QLabel("Opening: -")
+        self.layout.addWidget(self.opening_label)
+        self.opening_line_label = QLabel("")
+        self.layout.addWidget(self.opening_line_label)
+
+        # Clocks
+        self.white_clock_label = QLabel("White: 05:00")
+        self.black_clock_label = QLabel("Black: 05:00")
+        self.layout.addWidget(self.white_clock_label)
+        self.layout.addWidget(self.black_clock_label)
+
         # Status label
         self.status_label = QLabel("Status: Initializing...")
         self.layout.addWidget(self.status_label)
@@ -104,16 +136,56 @@ class MainWindow(QMainWindow):
         self.menubar = self.menuBar()
         file_menu = self.menubar.addMenu("&File")
 
+        new_game = QAction("New Standard Game", self)
+        new_game.triggered.connect(self.new_standard_game)
+        file_menu.addAction(new_game)
+
+        new960 = QAction("New Chess960 (Random)", self)
+        new960.triggered.connect(self.new_chess960_random)
+        file_menu.addAction(new960)
+
+        choose960 = QAction("New Chess960 (Choose)", self)
+        choose960.triggered.connect(self.new_chess960_select)
+        file_menu.addAction(choose960)
+
+        file_menu.addSeparator()
+
         exit_action = QAction("&Exit", self)
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
 
+    def new_standard_game(self):
+        self.reset_board()
+
+    def new_chess960_random(self):
+        self.reset_board(chess960=True)
+
+    def new_chess960_select(self):
+        pos, ok = QInputDialog.getInt(
+            self,
+            "Chess960 Position",
+            "Enter start position (0-959):",
+            0,
+            0,
+            959,
+        )
+        if ok:
+            self.reset_board(chess960=True, start_pos=pos)
+
     def update_board_display(self):
         # In a real app, you'd use chess.svg.board or a custom QGraphicsScene
         self.board_display.setText(str(self.board))
+        self.update_opening_info()
 
-    def reset_board(self):
-        self.board.reset()
+    def reset_board(self, chess960: bool = False, start_pos: int | None = None):
+        if chess960:
+            if start_pos is None:
+                start_pos = random.randint(0, 959)
+            self.board = chess.Board.from_chess960_pos(start_pos)
+        else:
+            self.board.reset()
+        self.clock.reset()
+        self.clock.start(self.board.turn)
         self.update_board_display()
         self.analysis_display.clear()
         self.status_label.setText("Status: Board Reset. Idle.")
@@ -192,6 +264,9 @@ class MainWindow(QMainWindow):
             self.board.push(move)
             self.update_board_display()
             self.status_label.setText(f"Status: Engine played {move.uci()}. Idle.")
+            self.clock.switch()
+            if not self.board.is_game_over():
+                self.clock.start(self.board.turn)
             if self.board.is_game_over():
                 self.handle_game_over()
         elif move:
@@ -308,6 +383,30 @@ class MainWindow(QMainWindow):
         if self.engine_worker.get_state() == EngineState.ANALYZING:
             self.engine_worker.stop_analysis() # Stop analysis if game over
             self.update_ui_from_engine_state()
+        self.clock.stop()
+
+    def update_clock_labels(self, white: int, black: int):
+        def fmt(sec: int) -> str:
+            m, s = divmod(max(0, sec), 60)
+            return f"{m:02d}:{s:02d}"
+
+        self.white_clock_label.setText(f"White: {fmt(white)}")
+        self.black_clock_label.setText(f"Black: {fmt(black)}")
+
+    def update_opening_info(self):
+        try:
+            name = chess.polyglot.opening_name(self.board)
+        except Exception:
+            name = "Unknown"
+
+        try:
+            opening = chess.openings.find_board(self.board)
+            line = " ".join(m.uci() for m in opening.mainline_moves()) if opening else ""
+        except Exception:
+            line = ""
+
+        self.opening_label.setText(f"Opening: {name}")
+        self.opening_line_label.setText(line)
 
 
     def closeEvent(self, event):
