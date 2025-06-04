@@ -199,22 +199,23 @@ class MainWindow(QMainWindow):
         self.update_ui_elements()
 
     # This method would be connected to a signal if EngineWorker streamed analysis
-    def handle_engine_analysis(self, analysis_data: dict):
-        # The current EngineWorker logs analysis but doesn't stream it to UI.
-        # This is a placeholder for how it *could* be handled.
-        # To make this work, EngineWorker's _handle_start_analysis would need to
-        # periodically send `info` dicts (e.g., via a callback that emits self.signals.analysis_update_ready).
-        # For now, this method won't be called directly by the current EngineWorker.
-        # We can simulate displaying last known info if EngineWorker stored it.
-        # Or, could try to parse EngineWorker's logs if desperate (not recommended).
-
-        # Example: score = analysis_data.get('score'), pv = analysis_data.get('pv')
-        # self.analysis_display.setText(f"Score: {score} PV: {pv}")
-        # For now, let's use it to show the current engine state if analyzing
-        if self.engine_worker and self.engine_worker.get_state() == EngineState.ANALYZING:
-            self.analysis_display.setText("Engine is analyzing... (Live data stream not implemented in this version)")
-        else:
+    def handle_engine_analysis(self, analysis_data: dict | None):
+        """Display analysis information from the engine."""
+        if not analysis_data:
             self.analysis_display.clear()
+            return
+
+        score = analysis_data.get("score")
+        pv = analysis_data.get("pv")
+
+        text_parts = []
+        if score is not None:
+            text_parts.append(f"Score: {score}")
+        if pv:
+            pv_str = " ".join(move.uci() for move in pv)
+            text_parts.append(f"PV: {pv_str}")
+
+        self.analysis_display.setText(" | ".join(text_parts))
 
 
     def update_ui_from_engine_state(self):
@@ -235,7 +236,8 @@ class MainWindow(QMainWindow):
             self.analysis_display.clear() # Clear analysis when idle
         elif state == EngineState.ANALYZING:
             self.status_label.setText("Status: Analyzing...")
-            self.handle_engine_analysis({}) # Placeholder call to update analysis display
+            info = self.engine_worker.get_latest_analysis_info()
+            self.handle_engine_analysis(info)
         elif state == EngineState.THINKING:
             # This state is usually brief due to blocking call, status set in request_engine_move_clicked
             self.status_label.setText("Status: Engine is thinking...")
@@ -353,4 +355,3 @@ if __name__ == '__main__':
 #    are handled correctly, especially if EngineWorker becomes more asynchronous with signals.
 #    Direct calls from UI to EngineWorker that block (like current request_best_move) are simpler
 #    but make UI less responsive. Checking state via timer is one way to decouple.
-```

@@ -22,8 +22,9 @@ class EngineWorker:
         self.state = EngineState.IDLE
         self.command_queue = queue.Queue()
         self.stop_event = threading.Event()  # Used to signal analysis loop to stop
-        self.analysis_stopped_event = threading.Event() # Used by stop_analysis() to wait for analysis to fully stop
-        self.analysis_info = None # Stores the AnalysisResult object from engine.analysis()
+        self.analysis_stopped_event = threading.Event()  # Used by stop_analysis() to wait for analysis to fully stop
+        self.analysis_info = None  # Stores the AnalysisResult object from engine.analysis()
+        self.latest_analysis_info = None  # Holds the most recent info dict for UI polling
 
         self.worker_thread = threading.Thread(target=self.run, name="EngineWorkerThread", daemon=True)
         self.worker_thread.start()
@@ -95,21 +96,24 @@ class EngineWorker:
         self.state = EngineState.ANALYZING
         self.stop_event.clear()
         self.analysis_stopped_event.clear() # Clear this event as analysis is starting
+        self.latest_analysis_info = None
         logger.info("Starting analysis.")
 
         try:
             # This analysis runs in the worker_thread, blocking other commands until it's stopped.
             with self.engine.analysis(board) as analysis_result:
-                self.analysis_info = analysis_result # Store the result object
-                for info in self.analysis_info: # Iterate over the analysis stream
+                self.analysis_info = analysis_result  # Store the result object
+                for info in self.analysis_info:  # Iterate over the analysis stream
                     if self.stop_event.is_set():
                         logger.info("Stop event received during analysis, terminating.")
                         break
-                    # Process/log analysis info (e.g., send to UI via a callback or queue)
+                    self.latest_analysis_info = info
                     score = info.get('score')
                     pv = info.get('pv')
                     if score is not None and pv is not None:
-                         logger.debug(f"Analysis: Score: {score}, PV: {[str(m) for m in pv]}")
+                        logger.debug(
+                            f"Analysis: Score: {score}, PV: {[str(m) for m in pv]}"
+                        )
         except chess.engine.EngineTerminatedError:
             logger.error("Engine terminated unexpectedly during analysis.", exc_info=True)
             self._handle_engine_failure()
@@ -235,12 +239,15 @@ class EngineWorker:
         # This call assumes that if state is ANALYZING, analysis_stopped_event is currently clear.
         # _handle_start_analysis is responsible for clearing it.
 
-        self.command_queue.put(("STOP_ANALYSIS", ()))
-        logger.info("STOP_ANALYSIS command queued. Waiting for analysis to confirm stoppage.")
+        # Signal the running analysis loop to exit
+        self.stop_event.set()
+        logger.info("Stop event set. Waiting for analysis loop to finish.")
 
         # Wait for the analysis loop's finally block to set this event
-        if not self.analysis_stopped_event.wait(timeout=10.0): # Timeout for safety
-            logger.error("Timeout waiting for analysis to stop. Analysis might still be running or stuck.")
+        if not self.analysis_stopped_event.wait(timeout=10.0):  # Timeout for safety
+            logger.error(
+                "Timeout waiting for analysis to stop. Analysis might still be running or stuck."
+            )
         else:
             logger.info("Analysis confirmed stopped. Engine should be IDLE.")
 
@@ -291,6 +298,10 @@ class EngineWorker:
 
     def get_state(self):
         return self.state
+
+    def get_latest_analysis_info(self):
+        """Return the most recent analysis info dictionary if available."""
+        return self.latest_analysis_info
 
 if __name__ == '__main__':
     # This example assumes you have a UCI chess engine (like Stockfish)
