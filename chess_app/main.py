@@ -8,94 +8,77 @@ from chess_app.ui.main_window import MainWindow
 # For this example, we'll define a default path for Stockfish.
 # In a real app, this might come from a config file, environment variable, or a discovery mechanism.
 
+import shutil # Ensure shutil is imported
+
 # Attempt to locate Stockfish. Users might need to set STOCKFISH_ENV_PATH or have it in PATH.
 DEFAULT_STOCKFISH_PATH = "stockfish" # Assume stockfish is in PATH
+logger = logging.getLogger(__name__) # Define logger globally for find_stockfish_path
 
 def find_stockfish_path():
-    """Tries to find a usable Stockfish executable path."""
+    """
+    Tries to find a usable Stockfish executable path.
+    Returns the path string if found, otherwise None.
+    """
     logger.info("Attempting to find Stockfish executable...")
-    # 1. Check environment variable
-    logger.info("Checking STOCKFISH_ENV_PATH environment variable...")
+
+    # 1. Check environment variable STOCKFISH_ENV_PATH
     env_path = os.getenv("STOCKFISH_ENV_PATH")
     if env_path:
+        logger.info(f"STOCKFISH_ENV_PATH is set to: {env_path}")
         if os.path.isfile(env_path) and os.access(env_path, os.X_OK):
             logger.info(f"Found valid Stockfish executable via STOCKFISH_ENV_PATH: {env_path}")
             return env_path
         else:
-            logger.warning(f"STOCKFISH_ENV_PATH ({env_path}) is set but is not a valid or executable file.")
+            logger.error(f"STOCKFISH_ENV_PATH ('{env_path}') is set but is not a valid or executable file. This path will be ignored.")
+            return None # Explicitly return None if env var is set but invalid
 
-    # 2. Check common known paths (example, adjust as needed or use a proper discovery)
-    #    This is highly OS-dependent and often not robust.
-    # common_paths = ["/usr/games/stockfish", "/usr/local/bin/stockfish", "./stockfish"]
-    # for path_to_check in common_paths:
-    #     if os.path.isfile(path_to_check) and os.access(path_to_check, os.X_OK):
-    #         logger.info(f"Found Stockfish at common path: {path_to_check}")
-    #         return path_to_check
+    # 2. If STOCKFISH_ENV_PATH is not set or was invalid (already returned None), try DEFAULT_STOCKFISH_PATH
+    logger.info(f"Checking for '{DEFAULT_STOCKFISH_PATH}' in system PATH using shutil.which...")
+    which_path = shutil.which(DEFAULT_STOCKFISH_PATH)
 
-    # 3. Rely on it being in system PATH (DEFAULT_STOCKFISH_PATH = "stockfish")
-    #    The EngineWorker will try to call this. We can't easily check os.access on
-    #    something that needs PATH resolution without `shutil.which` (Python 3.3+).
-    #    For simplicity, we'll just return the default and let EngineWorker try it.
-    #    A more robust check here would involve `shutil.which("stockfish")`.
-
-    # If using Python 3.3+, shutil.which is the best way to check PATH
-    logger.info(f"Attempting to find '{DEFAULT_STOCKFISH_PATH}' using shutil.which (checking system PATH)...")
-    try:
-        import shutil
-        which_path = shutil.which(DEFAULT_STOCKFISH_PATH)
-        if which_path and os.access(which_path, os.X_OK):
-            logger.info(f"Found executable Stockfish in PATH via shutil.which: {which_path} (will use command '{DEFAULT_STOCKFISH_PATH}')")
-            return DEFAULT_STOCKFISH_PATH # Return the command, not the full path, as Popen handles PATH
+    if which_path:
+        # shutil.which returns the absolute path if found and executable.
+        # We still do an explicit os.access check for robustness, though shutil.which usually implies it.
+        if os.access(which_path, os.X_OK):
+            logger.info(f"Found executable Stockfish in PATH: {which_path} (using command '{DEFAULT_STOCKFISH_PATH}')")
+            # Return the command string, as engine Popen usually handles PATH resolution well.
+            # Or return which_path if absolute path is preferred for Popen. For now, stick to command.
+            return DEFAULT_STOCKFISH_PATH
         else:
-            logger.warning(f"shutil.which found '{DEFAULT_STOCKFISH_PATH}' at '{which_path}', but it's not executable or invalid.")
-    except ImportError:
-        logger.warning("shutil.which is not available (requires Python 3.3+). Cannot verify Stockfish in PATH here.")
+            # This case should be rare if shutil.which returned a path.
+            logger.error(f"shutil.which found '{DEFAULT_STOCKFISH_PATH}' at '{which_path}', but it's not executable. This should not happen.")
+            return None
+    else:
+        logger.error(f"Default Stockfish command '{DEFAULT_STOCKFISH_PATH}' not found in system PATH.")
+        return None
 
-    logger.info(f"No valid Stockfish found via environment variable or PATH. Relying on default command '{DEFAULT_STOCKFISH_PATH}'.")
-    return DEFAULT_STOCKFISH_PATH
-
-
-# Configure logging for the main application
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
-# This STOCKFISH_PATH will be passed to EngineWorker via MainWindow
-# The EngineWorker itself will then try to use this path/command.
-STOCKFISH_PATH = find_stockfish_path()
-
+    # Fallback should not be reached if logic is correct, means something was missed.
+    # However, to be safe and satisfy original intent of returning something if all fails:
+    # logger.warning("Stockfish path detection failed unexpectedly. Returning None.")
+    # return None # All explicit checks failed
 
 def main():
-    logger.info("Application starting...")
+    # Configure logging as the first step
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logger.info("Application starting...") # Now logger is configured
+
     app = QApplication(sys.argv)
 
-    # Pre-flight check for Stockfish (basic check, EngineWorker does the realpopen)
-    # This is a simplified check. A more robust check would try to run `stockfish uci` briefly.
-    # The EngineWorker's initialization is the more definitive check.
+    STOCKFISH_PATH = find_stockfish_path()
 
-    # We use the path/command determined by find_stockfish_path() to initialize MainWindow,
-    # which in turn passes it to EngineWorker.
-    # A critical QMessageBox here might be too early if STOCKFISH_PATH is just "stockfish" (for PATH lookup).
-    # The EngineWorker's own error handling (which MainWindow reacts to) is probably better.
-    # However, if an explicit path was given via ENV and it's invalid, a warning is good.
-
-    env_path_check = os.getenv("STOCKFISH_ENV_PATH")
-    if env_path_check and not (os.path.isfile(env_path_check) and os.access(env_path_check, os.X_OK)):
-         QMessageBox.warning(
-            None, # Parent widget
-            "Stockfish Configuration Warning",
-            f"The Stockfish path specified in STOCKFISH_ENV_PATH ({env_path_check}) is not valid or not executable.\n"
-            f"The application will attempt to use '{DEFAULT_STOCKFISH_PATH}' from the system PATH."
-        )
-    elif STOCKFISH_PATH != DEFAULT_STOCKFISH_PATH and not (os.path.isfile(STOCKFISH_PATH) and os.access(STOCKFISH_PATH, os.X_OK)):
-        # This case covers if find_stockfish_path returned a specific local path that's invalid.
-        # It's less likely with the current find_stockfish_path logic which prefers returning the command.
+    if STOCKFISH_PATH is None:
+        logger.critical("Stockfish engine could not be found or configured correctly.")
         QMessageBox.critical(
-            None,
+            None, # Parent widget
             "Stockfish Not Found",
-            f"Stockfish executable not found or not executable at the determined path: {STOCKFISH_PATH}.\n"
-            "Please ensure Stockfish is installed and in your PATH, or set the STOCKFISH_ENV_PATH environment variable."
+            "Stockfish engine not found or configured correctly.\n"
+            "Please ensure Stockfish is installed and in your system PATH, "
+            "or set the STOCKFISH_ENV_PATH environment variable to the full executable path.\n\n"
+            "The application will now exit."
         )
-        # sys.exit(1) # Exiting here might be too abrupt. Let MainWindow try to initialize.
+        sys.exit(1)
+
+    logger.info(f"Stockfish path configured to: {STOCKFISH_PATH}")
 
     try:
         main_window = MainWindow(engine_path=STOCKFISH_PATH)
