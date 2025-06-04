@@ -177,6 +177,7 @@ class EngineWorker:
                 result_queue.put(best_move)
 
     def _handle_engine_failure(self):
+        logger.critical("Enter _handle_engine_failure: An engine-related critical error was detected.")
         logger.error("Handling engine failure: setting state to SHUTDOWN and closing engine.")
         self.state = EngineState.SHUTDOWN # Or an ERROR state
         if self.engine:
@@ -234,7 +235,7 @@ class EngineWorker:
             # self.analysis_stopped_event.set() # This might be problematic if a start is queued right after.
             # Better to rely on the analysis loop itself to set this.
             # If it's IDLE, analysis_stopped_event should already be set from init or last stop.
-            return
+            return True # Analysis wasn't running, so it's "stopped" cleanly in a sense.
 
         # It's important that analysis_stopped_event is clear if analysis is running or about to run.
         # This call assumes that if state is ANALYZING, analysis_stopped_event is currently clear.
@@ -245,12 +246,20 @@ class EngineWorker:
         logger.info("Stop event set. Waiting for analysis loop to finish.")
 
         # Wait for the analysis loop's finally block to set this event
-        if not self.analysis_stopped_event.wait(timeout=10.0):  # Timeout for safety
-            logger.error(
-                "Timeout waiting for analysis to stop. Analysis might still be running or stuck."
-            )
+
+        if not self.analysis_stopped_event.wait(timeout=10.0): # Timeout for safety
+            logger.error("Timeout waiting for analysis to stop. Forcing state to IDLE. Analysis may not have stopped cleanly in the engine process.")
+            #self.state = EngineState.IDLE # Force state to IDLE
+            #self.stop_event.set() # Ensure stop_event is still set for any lingering analysis loop
+            # self.analysis_stopped_event is not set here because the loop didn't confirm it.
+            # However, subsequent calls to stop_analysis might hang if it's not ANALYZING.
+            # The main concern is the analysis loop itself. If it's stuck, it's stuck.
+            # Forcing IDLE allows the app to potentially proceed, but the engine might be unstable.
+            logger.info("EngineWorker state forced to IDLE due to stop_analysis timeout.")
+            return False # Indicate timeout
         else:
             logger.info("Analysis confirmed stopped. Engine should be IDLE.")
+            return True # Indicate clean stop
 
 
     def request_best_move(self, board: chess.Board, time_limit: float):

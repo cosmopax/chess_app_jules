@@ -13,11 +13,16 @@ DEFAULT_STOCKFISH_PATH = "stockfish" # Assume stockfish is in PATH
 
 def find_stockfish_path():
     """Tries to find a usable Stockfish executable path."""
+    logger.info("Attempting to find Stockfish executable...")
     # 1. Check environment variable
+    logger.info("Checking STOCKFISH_ENV_PATH environment variable...")
     env_path = os.getenv("STOCKFISH_ENV_PATH")
-    if env_path and os.path.isfile(env_path) and os.access(env_path, os.X_OK):
-        logger.info(f"Using Stockfish from STOCKFISH_ENV_PATH: {env_path}")
-        return env_path
+    if env_path:
+        if os.path.isfile(env_path) and os.access(env_path, os.X_OK):
+            logger.info(f"Found valid Stockfish executable via STOCKFISH_ENV_PATH: {env_path}")
+            return env_path
+        else:
+            logger.warning(f"STOCKFISH_ENV_PATH ({env_path}) is set but is not a valid or executable file.")
 
     # 2. Check common known paths (example, adjust as needed or use a proper discovery)
     #    This is highly OS-dependent and often not robust.
@@ -34,16 +39,19 @@ def find_stockfish_path():
     #    A more robust check here would involve `shutil.which("stockfish")`.
 
     # If using Python 3.3+, shutil.which is the best way to check PATH
+    logger.info(f"Attempting to find '{DEFAULT_STOCKFISH_PATH}' using shutil.which (checking system PATH)...")
     try:
         import shutil
         which_path = shutil.which(DEFAULT_STOCKFISH_PATH)
         if which_path and os.access(which_path, os.X_OK):
-            logger.info(f"Found Stockfish in PATH: {which_path} (using '{DEFAULT_STOCKFISH_PATH}')")
+            logger.info(f"Found executable Stockfish in PATH via shutil.which: {which_path} (will use command '{DEFAULT_STOCKFISH_PATH}')")
             return DEFAULT_STOCKFISH_PATH # Return the command, not the full path, as Popen handles PATH
+        else:
+            logger.warning(f"shutil.which found '{DEFAULT_STOCKFISH_PATH}' at '{which_path}', but it's not executable or invalid.")
     except ImportError:
-        logger.warning("shutil.which not available (requires Python 3.3+). Will try default stockfish command.")
+        logger.warning("shutil.which is not available (requires Python 3.3+). Cannot verify Stockfish in PATH here.")
 
-    logger.info(f"Assuming '{DEFAULT_STOCKFISH_PATH}' is in system PATH or configured elsewhere.")
+    logger.info(f"No valid Stockfish found via environment variable or PATH. Relying on default command '{DEFAULT_STOCKFISH_PATH}'.")
     return DEFAULT_STOCKFISH_PATH
 
 
