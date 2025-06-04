@@ -33,8 +33,8 @@ class MainWindow(QMainWindow):
         self.engine_path = engine_path
 
         # UI Flags (to be reviewed based on EngineWorker state)
-        self.is_engine_thinking_ui_flag = False # UI's perception, should sync with EngineWorker.THINKING
-        self.analysis_is_on_ui_flag = False # UI's perception, should sync with EngineWorker.ANALYZING
+        self.is_engine_thinking_ui_flag = False # UI's perception, should sync with EngineState.THINKING
+        self.analysis_is_on_ui_flag = False # UI's perception, should sync with EngineState.ANALYZING
 
         self._init_ui()
         self._create_menu()
