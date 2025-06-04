@@ -353,4 +353,3 @@ if __name__ == '__main__':
 #    are handled correctly, especially if EngineWorker becomes more asynchronous with signals.
 #    Direct calls from UI to EngineWorker that block (like current request_best_move) are simpler
 #    but make UI less responsive. Checking state via timer is one way to decouple.
-```
