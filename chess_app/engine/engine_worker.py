@@ -2,6 +2,7 @@ import enum
 import logging
 import queue
 import threading
+import time
 import chess
 import chess.engine
 
@@ -313,7 +314,7 @@ if __name__ == '__main__':
     init_timeout = 5 # seconds
     while worker.get_state() == EngineState.IDLE and not worker.engine and init_timeout > 0 :
         logger.info(f"Waiting for engine to initialize... current state: {worker.get_state()}")
-        threading.sleep(0.5)
+        time.sleep(0.5)
         init_timeout -=0.5
 
     if not worker.engine:
@@ -330,10 +331,10 @@ if __name__ == '__main__':
         logger.info(f"Requesting to start analysis on FEN: {current_board.fen()}")
         worker.start_analysis(current_board.copy())
 
-        threading.sleep(0.5) # Let worker pick up command
+        time.sleep(0.5) # Let worker pick up command
         if worker.get_state() == EngineState.ANALYZING:
             logger.info("Analysis started. Let it run for a few seconds...")
-            threading.sleep(3)
+            time.sleep(3)
             logger.info("Requesting to stop analysis.")
             worker.stop_analysis() # This is a blocking call
             logger.info(f"Analysis stopped. Engine state: {worker.get_state()}")
@@ -341,7 +342,7 @@ if __name__ == '__main__':
             logger.warning(f"Failed to start analysis. State: {worker.get_state()}")
             worker.stop_analysis() # Attempt to clean up if stuck
 
-    threading.sleep(1) # Pause between tests
+    time.sleep(1) # Pause between tests
 
     # --- Test Case 2: Request Best Move ---
     if worker.get_state() == EngineState.IDLE:
@@ -357,14 +358,14 @@ if __name__ == '__main__':
     else:
         logger.warning(f"Engine not IDLE (state: {worker.get_state()}), skipping best move test.")
 
-    threading.sleep(1)
+    time.sleep(1)
 
     # --- Test Case 3: Invalid request (find move while analyzing) ---
     if worker.get_state() == EngineState.IDLE:
         logger.info("--- Test Case 3: Find move while analyzing (expected failure/rejection) ---")
         current_board = chess.Board()
         worker.start_analysis(current_board.copy())
-        threading.sleep(0.1) # ensure analysis starts
+        time.sleep(0.1) # ensure analysis starts
         if worker.get_state() == EngineState.ANALYZING:
             logger.info("Analysis started. Now attempting to request best move (should be rejected).")
             move = worker.request_best_move(current_board.copy(), time_limit=0.5)
