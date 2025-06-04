@@ -20,6 +20,7 @@ import chess.svg
 import chess.polyglot
 import chess.openings
 from chess_app.ui.chess_clock import ChessClock
+from chess_app.openings import fetch_lichess_moves
 
 # Assuming EngineWorker is in chess_app.engine.engine_worker
 # Adjust the import path if your project structure is different.
@@ -127,6 +128,9 @@ class MainWindow(QMainWindow):
         self.layout.addWidget(self.opening_label)
         self.opening_line_label = QLabel("Line: -") # Label for mainline moves
         self.layout.addWidget(self.opening_line_label)
+        # Lichess opening explorer information
+        self.lichess_moves_label = QLabel("Lichess: -")
+        self.layout.addWidget(self.lichess_moves_label)
 
         # Clocks
         self.white_clock_label = QLabel("White: 00:00") # Initialized by reset_board -> clock.reset
@@ -599,6 +603,20 @@ class MainWindow(QMainWindow):
         except Exception as e: # chess.openings might raise errors if position is too deep or unusual
             self.opening_line_label.setText("ECO: -")
             logger.debug(f"MainWindow: Could not determine ECO opening: {e}")
+
+        # Query Lichess for the most common continuations from this position.
+        moves = fetch_lichess_moves(self.board)
+        if moves:
+            total = sum(m.get("white", 0) + m.get("draws", 0) + m.get("black", 0) for m in moves)
+            parts = []
+            for m in moves[:3]:
+                count = m.get("white", 0) + m.get("draws", 0) + m.get("black", 0)
+                perc = 100 * count / total if total else 0
+                san = m.get("san", m.get("uci", ""))
+                parts.append(f"{san} ({perc:.1f}% )")
+            self.lichess_moves_label.setText("Lichess: " + ", ".join(parts))
+        else:
+            self.lichess_moves_label.setText("Lichess: n/a")
 
         # logger.debug(f"MainWindow: Opening info updated - Name: {opening_name}, ECO: {self.opening_line_label.text()}")
 

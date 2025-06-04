@@ -59,6 +59,12 @@ class DummyEngine:
         self.pid = 1234 # Mock PID
         self.is_alive_mock = MagicMock(return_value=True) # To mock internal engine process checks
         self.analysis_context = None
+        # Expose quit as a MagicMock so tests can assert calls
+        self.quit = MagicMock(side_effect=self._quit)
+
+    def _quit(self):
+        # Mark engine as no longer alive
+        self.is_alive_mock.return_value = False
 
     def analysis(self, board, multipv=1, *, limit=None, info=None, stop=None):
         # stop event is passed from EngineWorker's self.stop_event
@@ -72,11 +78,7 @@ class DummyEngine:
         result.move = chess_stub.Move.from_uci("e2e4") # Default mock move
         return result
 
-    def quit(self):
-        # print("DummyEngine.quit() called")
-        self.is_alive_mock.return_value = False
-
-    def close(self): # SimpleEngine has close, which calls quit
+    def close(self):  # SimpleEngine has close, which calls quit
         self.quit()
 
     @property

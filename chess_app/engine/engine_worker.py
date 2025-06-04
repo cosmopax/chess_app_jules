@@ -148,7 +148,9 @@ class EngineWorker:
             # The `with self.engine.analysis(...)` block ensures the analysis process
             # is properly managed and closed when exiting the block.
             # This is a blocking call in terms of this handler, but it iterates, yielding info.
-            with self.engine.analysis(board) as analysis_result:
+            # Pass the worker's stop_event to the engine so analysis can
+            # terminate promptly when stop_analysis() is called in tests or UI.
+            with self.engine.analysis(board, stop=self.stop_event) as analysis_result:
                 # self.analysis_info is stored to provide access to the AnalysisResult object,
                 # primarily for iterating through the analysis information stream.
                 self.analysis_info = analysis_result
