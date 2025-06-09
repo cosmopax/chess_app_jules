@@ -142,6 +142,12 @@ class EngineWorker:
         self.stop_event.clear()             # Clear the stop signal for the new analysis session.
         self.analysis_stopped_event.clear() # Clear this event; it will be set when analysis truly stops.
         self.latest_analysis_info = None    # Reset previous analysis data.
+
+        # Ensure the engine knows whether we're analysing a Chess960 position or not
+        try:
+            self.engine.configure({"UCI_Chess960": board.chess960})
+        except Exception as e:
+            logger.warning(f"Engine _handle_start_analysis: Failed to configure UCI_Chess960 option: {e}")
         logger.info("Engine _handle_start_analysis: Starting continuous analysis.")
 
         try:
@@ -214,6 +220,10 @@ class EngineWorker:
             return
 
         logger.info(f"Engine _handle_find_best_move: Changing state to THINKING for board: {board.fen()} with time limit: {time_limit}s.")
+        try:
+            self.engine.configure({"UCI_Chess960": board.chess960})
+        except Exception as e:
+            logger.warning(f"Engine _handle_find_best_move: Failed to configure UCI_Chess960 option: {e}")
         self.state = EngineState.THINKING
         best_move = None
         try:

@@ -9,8 +9,11 @@ from unittest.mock import patch, MagicMock, PropertyMock
 chess_stub = types.ModuleType('chess')
 
 class DummyBoard:
+    def __init__(self, fen="dummy_fen", chess960=False):
+        self._fen = fen
+        self.chess960 = chess960
     def fen(self):
-        return "dummy_fen"
+        return self._fen
     def copy(self):
         return self
     def is_game_over(self):
@@ -59,6 +62,7 @@ class DummyEngine:
         self.pid = 1234 # Mock PID
         self.is_alive_mock = MagicMock(return_value=True) # To mock internal engine process checks
         self.analysis_context = None
+        self.configure_calls = []
         # Expose quit as a MagicMock so tests can assert calls
         self.quit = MagicMock(side_effect=self._quit)
 
@@ -77,6 +81,9 @@ class DummyEngine:
         result = MagicMock()
         result.move = chess_stub.Move.from_uci("e2e4") # Default mock move
         return result
+
+    def configure(self, options):
+        self.configure_calls.append(options)
 
     def close(self):  # SimpleEngine has close, which calls quit
         self.quit()
@@ -225,6 +232,24 @@ class TestEngineWorker(unittest.TestCase):
         # request_best_move is blocking and should return the state to IDLE itself.
         self.assertEqual(worker.get_state(), EngineState.IDLE, "Engine should return to IDLE after finding move.")
         mock_engine_instance.play.assert_called_once()
+
+        worker.quit_engine()
+        self.wait_for_engine_state(worker, EngineState.SHUTDOWN)
+
+    @patch('chess.engine.SimpleEngine.popen_uci')
+    def test_chess960_option_set(self, mock_popen_uci):
+        mock_engine_instance = DummyEngine("test_960")
+        mock_popen_uci.return_value = mock_engine_instance
+
+        worker = EngineWorker(engine_path='dummy_path')
+        self.wait_for_engine_init(worker)
+
+        board960 = DummyBoard(chess960=True)
+        worker.start_analysis(board960)
+        self.wait_for_engine_state(worker, EngineState.ANALYZING, timeout=0.5)
+        worker.stop_analysis()
+
+        self.assertIn({'UCI_Chess960': True}, mock_engine_instance.configure_calls)
 
         worker.quit_engine()
         self.wait_for_engine_state(worker, EngineState.SHUTDOWN)

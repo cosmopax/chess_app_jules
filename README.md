@@ -43,13 +43,29 @@ This is a chess application with a graphical user interface.
 
 4.  **Install Python dependencies:**
 
-    The primary known dependency for the graphical interface is PySide6.
+The primary known dependency for the graphical interface is PySide6.
 
     Install it using pip:
     ```bash
     pip install PySide6
     ```
     Other dependencies might be identified as development progresses. For now, PySide6 is the essential one to get started.
+
+### Quick Setup Scripts
+
+For convenience the repository includes shell scripts that download the app and the Stockfish engine in one step.
+
+* **Ubuntu/Linux:** `setup_chess_ubuntu.sh`
+* **macOS:** `setup_chess_macos.sh`
+
+Both scripts clone this repository, create a Python virtual environment, download a Stockfish binary and generate a `run_chess.sh` launcher. Edit the `APP_REPO_URL` variable inside the script to point to your fork or mirror, make the script executable and run it:
+
+```bash
+chmod +x setup_chess_ubuntu.sh
+./setup_chess_ubuntu.sh
+```
+
+After the script finishes you can start the GUI with `./run_chess.sh` from the target directory.
 
 5.  **Configure the Stockfish Chess Engine (macOS):**
 

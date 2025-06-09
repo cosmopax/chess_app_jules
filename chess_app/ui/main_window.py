@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QAction,
     QMessageBox,
     QInputDialog,
+    QFileDialog,
 )
 from PySide6.QtCore import Qt, QTimer, Signal, Slot, QObject
 import random
@@ -177,6 +178,14 @@ class MainWindow(QMainWindow):
         new_960_select_action.triggered.connect(self.new_chess960_select)
         file_menu.addAction(new_960_select_action)
 
+        start_fen_action = QAction("Start From FEN...", self)
+        start_fen_action.triggered.connect(self.new_from_fen)
+        file_menu.addAction(start_fen_action)
+
+        load_fen_file_action = QAction("Load FEN From File...", self)
+        load_fen_file_action.triggered.connect(self.load_fen_from_file)
+        file_menu.addAction(load_fen_file_action)
+
         file_menu.addSeparator()
 
         exit_action = QAction("&Exit", self)
@@ -241,6 +250,42 @@ class MainWindow(QMainWindow):
         self.is_engine_thinking_ui_flag = False # Reset UI thinking flag
         self.update_ui_from_engine_state() # Refresh UI elements based on new state (should be IDLE)
         logger.info("MainWindow: Board reset complete.")
+
+    def load_fen(self, fen: str):
+        """Load a board from a FEN string."""
+        try:
+            new_board = chess.Board(fen)
+        except Exception as e:
+            QMessageBox.warning(self, "Invalid FEN", f"Could not load FEN:\n{e}")
+            return
+
+        if self.engine_worker and self.engine_worker.get_state() == EngineState.ANALYZING:
+            self.engine_worker.stop_analysis()
+
+        self.board = new_board
+        self.clock.reset()
+        self.clock.start(self.board.turn)
+        self.update_board_display()
+        self.analysis_display.clear()
+        self.status_label.setText("Status: Position loaded.")
+        self.update_ui_from_engine_state()
+
+    def new_from_fen(self):
+        """Prompt the user for a FEN string and start a game from that position."""
+        fen, ok = QInputDialog.getText(self, "Start From FEN", "Enter FEN string:")
+        if ok and fen:
+            self.load_fen(fen)
+
+    def load_fen_from_file(self):
+        """Load a FEN string from a file."""
+        path, _ = QFileDialog.getOpenFileName(self, "Open FEN File", "", "FEN Files (*.fen);;All Files (*)")
+        if path:
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    line = f.readline().strip()
+                self.load_fen(line)
+            except Exception as e:
+                QMessageBox.warning(self, "File Error", f"Could not read FEN file:\n{e}")
 
 
     def toggle_analysis_clicked(self):
