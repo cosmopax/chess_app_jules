@@ -1,71 +1,51 @@
 #!/bin/bash
 set -e
 
-# --- Preamble & Definitions ---
-TARGET_DIR="/home/cosmopax/Desktop/chess_jules"
-APP_REPO_URL="<YOUR_CHESS_APP_REPO_URL_HERE>" # IMPORTANT: Replace this URL!
-APP_DIR_NAME="chess-app"
-STOCKFISH_DOWNLOAD_URL="https://stockfishchess.org/files/stockfish-16.1-linux-x86-64.tar.gz"
-STOCKFISH_INTERNAL_EXEC_NAME="stockfish_binary" # Renamed executable inside our stockfish_engine dir
-
 echo "--- Chess App Setup Script for Ubuntu ---"
-echo "Target directory: $TARGET_DIR"
-echo "App Repository URL: $APP_REPO_URL"
+
+# --- Configuration ---
+TARGET_DIR_ENV="$HOME/chess_app_env" # For Stockfish
+APP_SOURCE_DIR="$(pwd)" # Assumes script is run from the root of the chess app repo
+# APP_NAME_FROM_SOURCE_DIR="\$(basename "\$APP_SOURCE_DIR")" # Not used, but kept for reference
+STOCKFISH_DIR_NAME="stockfish_engine"
+STOCKFISH_INTERNAL_EXEC_NAME="stockfish_binary" # Standardized name for the exec within our env
+STOCKFISH_DOWNLOAD_URL="https://stockfishchess.org/files/stockfish-16.1-linux-x86-64.tar.gz"
+VENV_DIR_NAME="venv" # Name of the virtual environment directory
+
+echo "Application Source Directory: $APP_SOURCE_DIR"
+echo "Environment Target Directory (for Stockfish): $TARGET_DIR_ENV"
+echo "Python Virtual Environment will be in: $APP_SOURCE_DIR/$VENV_DIR_NAME"
 echo "Stockfish Download URL: $STOCKFISH_DOWNLOAD_URL"
 echo ""
 
 # --- System Dependencies ---
 echo "--- Checking and Installing System Dependencies ---"
+# Ensure non-interactive frontend for apt commands if script is fully automated
+export DEBIAN_FRONTEND=noninteractive
 sudo apt update
 sudo apt install -y git python3 python3-venv python3-pip wget tar
 echo "System dependencies checked/installed."
 echo ""
 
-# --- Target Directory ---
-echo "--- Preparing Target Directory ---"
-mkdir -p "$TARGET_DIR"
-cd "$TARGET_DIR"
-echo "Changed directory to $TARGET_DIR"
+# --- Target Directory for Stockfish & Python Virtual Environment ---
+echo "--- Setting up Python Virtual Environment ---"
+cd "$APP_SOURCE_DIR" # Navigate to app source to create venv there
+echo "Creating Python virtual environment in $APP_SOURCE_DIR/$VENV_DIR_NAME..."
+python3 -m venv "$VENV_DIR_NAME"
+echo "Activating virtual environment and installing PySide6..."
+# Use subshell to activate, install, and then it deactivates automatically
+(
+    source "$APP_SOURCE_DIR/$VENV_DIR_NAME/bin/activate"
+    pip install PySide6
+)
+echo "Python dependencies (PySide6) installed in $APP_SOURCE_DIR/$VENV_DIR_NAME."
 echo ""
 
-# --- Chess App Repository (Clone or Update) ---
-echo "--- Setting up Chess Application Repository ---"
-APP_PATH="$TARGET_DIR/$APP_DIR_NAME"
-if [ -d "$APP_PATH" ]; then
-    echo "Application directory '$APP_PATH' already exists. Attempting to update..."
-    cd "$APP_PATH"
-    git pull
-    cd "$TARGET_DIR"
-    echo "Application repository updated."
-else
-    echo "Cloning application repository from '$APP_REPO_URL' into '$APP_DIR_NAME'..."
-    git clone "$APP_REPO_URL" "$APP_DIR_NAME"
-    echo "Application repository cloned."
-fi
-echo ""
-
-# --- Python Virtual Environment & Dependencies ---
-echo "--- Setting up Python Virtual Environment and Dependencies ---"
-cd "$APP_PATH"
-if [ ! -d "venv" ]; then
-    echo "Creating Python virtual environment..."
-    python3 -m venv venv
-    echo "Virtual environment created."
-else
-    echo "Virtual environment 'venv' already exists."
-fi
-
-echo "Installing PySide6 into the virtual environment..."
-venv/bin/pip install PySide6
-echo "PySide6 installation complete."
-cd "$TARGET_DIR"
-echo ""
-
-# --- Stockfish Setup/Update ---
-echo "--- Setting up/Updating Stockfish Chess Engine ---"
-STOCKFISH_DIR="$TARGET_DIR/stockfish_engine"
-mkdir -p "$STOCKFISH_DIR"
-cd "$STOCKFISH_DIR"
+# --- Stockfish Setup ---
+echo "--- Setting up Stockfish Chess Engine in $TARGET_DIR_ENV ---"
+STOCKFISH_FULL_PATH="$TARGET_DIR_ENV/$STOCKFISH_DIR_NAME"
+mkdir -p "$STOCKFISH_FULL_PATH"
+cd "$STOCKFISH_FULL_PATH"
 
 echo "Removing old Stockfish version if any..."
 rm -rf ./* # Clear out the directory before downloading new version
@@ -74,83 +54,117 @@ echo "Downloading Stockfish from $STOCKFISH_DOWNLOAD_URL..."
 if wget -O stockfish_archive.tar.gz "$STOCKFISH_DOWNLOAD_URL"; then
     echo "Stockfish archive downloaded."
     echo "Extracting Stockfish..."
-    # Attempt to extract, stripping the top-level directory if present
-    # The find command below will look for the actual binary
+    # Attempt to extract. The provided URL for 16.1 tar.gz contains a top-level dir like 'stockfish-16.1-linux-x86-64'
+    # We want to strip that directory to get its contents directly.
+    # Using --strip-components=1 assumes the tarball has a single top-level directory.
     if tar -xvzf stockfish_archive.tar.gz --strip-components=1; then
         echo "Stockfish extracted."
 
-        # Search for the main Stockfish executable.
-        # Prioritize common names. Exclude text/doc files.
-        FOUND_EXEC=$(find . -maxdepth 1 -type f \( -name "stockfish" -o -name "stockfish-*" -o -name "Stockfish" \) ! -name "*.md" ! -name "*.txt" ! -name "*.tar.gz" -print -quit)
+        FOUND_EXEC=""
+        # Common names for Stockfish executables post-extraction from this specific tarball
+        # The 'stockfish-16.1-linux-x86-64' tarball contains executables like:
+        # stockfish-x86-64-avx2, stockfish-x86-64-bmi2, stockfish-x86-64-modern, stockfish-x86-64-popcnt
+        # We should pick one, e.g., 'stockfish-x86-64-modern' or a generic 'stockfish' if it exists.
+        # The tar structure might be stockfish/stockfish-.... so check that too.
+        COMMON_NAMES=(
+            "stockfish"                             # If a generic one is present
+            "stockfish-x86-64-modern"             # A good default modern version
+            "stockfish-x86-64-avx2"               # Common optimized version
+            "stockfish-x86-64-bmi2"
+            "stockfish-16.1-linux-x86-64"         # Sometimes the main binary has version in name
+        )
+        for name in "${COMMON_NAMES[@]}"; do
+            if [ -f "$name" ] && [ -x "$name" ]; then
+                FOUND_EXEC="$name"
+                break
+            fi
+        done
 
-        if [ -n "$FOUND_EXEC" ] && [ -f "$FOUND_EXEC" ]; then
+        if [ -n "$FOUND_EXEC" ]; then
             echo "Found Stockfish executable: $FOUND_EXEC"
-            mv "$FOUND_EXEC" "$STOCKFISH_INTERNAL_EXEC_NAME"
-            chmod +x "$STOCKFISH_INTERNAL_EXEC_NAME"
-            echo "Stockfish setup complete. Executable: $STOCKFISH_DIR/$STOCKFISH_INTERNAL_EXEC_NAME"
+            rm -f "./$STOCKFISH_INTERNAL_EXEC_NAME" # Remove if already exists
+            mv "$FOUND_EXEC" "./$STOCKFISH_INTERNAL_EXEC_NAME"
+            chmod +x "./$STOCKFISH_INTERNAL_EXEC_NAME"
+            echo "Stockfish setup complete. Executable standardized to: $STOCKFISH_FULL_PATH/$STOCKFISH_INTERNAL_EXEC_NAME"
         else
-            echo "Error: Could not find the Stockfish executable after extraction."
+            echo "Error: Could not find a suitable Stockfish executable after extraction."
             echo "Please check the archive structure at $STOCKFISH_DOWNLOAD_URL or the extraction process."
-            echo "The downloaded archive stockfish_archive.tar.gz is still in $STOCKFISH_DIR for inspection."
+            echo "The downloaded archive stockfish_archive.tar.gz is still in $STOCKFISH_FULL_PATH for inspection."
+            echo "Contents of $STOCKFISH_FULL_PATH (extraction directory):"
+            ls -R . # List contents for debugging
+            exit 1
         fi
     else
         echo "Error: Failed to extract Stockfish archive. The archive might be corrupted or the structure unexpected."
-        echo "The downloaded archive stockfish_archive.tar.gz is still in $STOCKFISH_DIR for inspection."
+        echo "The downloaded archive stockfish_archive.tar.gz is still in $STOCKFISH_FULL_PATH for inspection."
+        exit 1
     fi
 else
     echo "Error: wget failed to download Stockfish from $STOCKFISH_DOWNLOAD_URL."
     echo "Skipping further Stockfish processing for this run."
+    exit 1
 fi
-cd "$TARGET_DIR"
+cd "$APP_SOURCE_DIR" # Return to app source directory
 echo ""
 
-# --- Create Launcher Script (run_chess.sh) ---
+# --- Create Launcher Script (run_chess.sh in APP_SOURCE_DIR) ---
 echo "--- Creating Launcher Script (run_chess.sh) ---"
-LAUNCHER_SCRIPT_PATH="$TARGET_DIR/run_chess.sh"
+LAUNCHER_SCRIPT_PATH="$APP_SOURCE_DIR/run_chess.sh"
 
-# Using a heredoc for the launcher script content
+# Variables that need to be expanded when run_chess.sh is CREATED
+# VENV_DIR_NAME, STOCKFISH_DIR_NAME, STOCKFISH_INTERNAL_EXEC_NAME are already defined in this script.
+# TARGET_DIR_ENV is also defined in this script.
+
 cat > "$LAUNCHER_SCRIPT_PATH" << EOL
 #!/bin/bash
 # Launcher for the Chess App
 set -e
 
-echo "Changing directory to script location: \$(dirname "\$0")"
-cd "\$(dirname "\$0")" # Ensures script runs reliably from any location
+# APP_SOURCE_DIR should be the directory where this run_chess.sh script itself is located
+APP_SOURCE_DIR="\$(cd "\$(dirname "\$0")" && pwd)"
 
-TARGET_DIR_BASE="\$PWD" # Should be $TARGET_DIR
-APP_DIR_NAME_LAUNCHER="$APP_DIR_NAME" # Must match APP_DIR_NAME from setup
-APP_PATH_LAUNCHER="\$TARGET_DIR_BASE/\$APP_DIR_NAME_LAUNCHER"
-STOCKFISH_INTERNAL_EXEC_NAME_LAUNCHER="$STOCKFISH_INTERNAL_EXEC_NAME" # Must match from setup
-STOCKFISH_EXEC_PATH_LAUNCHER="\$TARGET_DIR_BASE/stockfish_engine/\$STOCKFISH_INTERNAL_EXEC_NAME_LAUNCHER"
+# These must match the definitions in the setup_chess_ubuntu.sh script
+TARGET_DIR_ENV_LAUNCHER="$TARGET_DIR_ENV"
+STOCKFISH_DIR_NAME_LAUNCHER="$STOCKFISH_DIR_NAME"
+STOCKFISH_EXEC_NAME_LAUNCHER="$STOCKFISH_INTERNAL_EXEC_NAME"
+VENV_DIR_LAUNCHER="$VENV_DIR_NAME"
 
-echo "Activating Python virtual environment from \$APP_PATH_LAUNCHER/venv..."
-if [ -f "\$APP_PATH_LAUNCHER/venv/bin/activate" ]; then
-    source "\$APP_PATH_LAUNCHER/venv/bin/activate"
-else
-    echo "Error: Virtual environment not found at \$APP_PATH_LAUNCHER/venv."
-    echo "Please run the setup script (setup_chess_ubuntu.sh) again."
+STOCKFISH_EXEC_PATH="\$TARGET_DIR_ENV_LAUNCHER/\$STOCKFISH_DIR_NAME_LAUNCHER/\$STOCKFISH_EXEC_NAME_LAUNCHER"
+VENV_ACTIVATE_PATH="\$APP_SOURCE_DIR/\$VENV_DIR_LAUNCHER/bin/activate"
+
+echo "Chess App Launcher"
+echo "Application Source: \$APP_SOURCE_DIR"
+echo "Environment Base (Stockfish): \$TARGET_DIR_ENV_LAUNCHER"
+echo "Stockfish Path: \$STOCKFISH_EXEC_PATH"
+echo "Venv Path: \$VENV_ACTIVATE_PATH"
+
+if [ ! -f "\$VENV_ACTIVATE_PATH" ]; then
+    echo "Error: Virtual environment not found at \$VENV_ACTIVATE_PATH."
+    echo "Please run the setup script (setup_chess_ubuntu.sh) from the application root directory again."
     exit 1
 fi
+source "\$VENV_ACTIVATE_PATH"
+echo "Python virtual environment activated."
 
-echo "Setting STOCKFISH_ENV_PATH to \$STOCKFISH_EXEC_PATH_LAUNCHER"
-export STOCKFISH_ENV_PATH="\$STOCKFISH_EXEC_PATH_LAUNCHER"
-
-echo "Launching Chess App from \$APP_PATH_LAUNCHER/chess_app/main.py..."
-if [ -f "\$APP_PATH_LAUNCHER/chess_app/main.py" ]; then
-    python "\$APP_PATH_LAUNCHER/chess_app/main.py"
-else
-    echo "Error: Main application script not found at \$APP_PATH_LAUNCHER/chess_app/main.py."
-    echo "Please check the repository structure or run the setup script again."
+if [ ! -x "\$STOCKFISH_EXEC_PATH" ]; then
+    echo "Error: Stockfish executable not found or not executable at \$STOCKFISH_EXEC_PATH."
+    echo "Please ensure Stockfish was downloaded and set up correctly by the setup script."
     exit 1
 fi
+# Export for the application to use
+export STOCKFISH_ENV_PATH="\$STOCKFISH_EXEC_PATH"
+echo "STOCKFISH_ENV_PATH set to: \$STOCKFISH_ENV_PATH"
 
-# Deactivation is tricky with GUI apps.
-# If the python app exits cleanly, this might run.
-# If user closes GUI window, the script waiting on 'python' might exit immediately.
-# echo "Chess app exited. Deactivating virtual environment (if still active in this script's context)..."
-# if type deactivate > /dev/null 2>&1; then
-#    deactivate
-# fi
+APP_MAIN_SCRIPT="\$APP_SOURCE_DIR/chess_app/main.py"
+if [ ! -f "\$APP_MAIN_SCRIPT" ]; then
+    echo "Error: Main application script not found at \$APP_MAIN_SCRIPT."
+    echo "Please ensure the application structure is correct and you are running this from the app root."
+    exit 1
+fi
+echo "Launching Chess App: python \$APP_MAIN_SCRIPT"
+python "\$APP_MAIN_SCRIPT"
+
+echo "Chess App exited."
 EOL
 
 chmod +x "$LAUNCHER_SCRIPT_PATH"
@@ -159,21 +173,16 @@ echo ""
 
 # --- Final Instructions ---
 echo "--- Setup Script Finished ---"
-echo "IMPORTANT: You MUST replace '<YOUR_CHESS_APP_REPO_URL_HERE>' in this script"
-echo "           (setup_chess_ubuntu.sh) with the actual Git repository URL for the chess application."
-echo "           Currently set to: $APP_REPO_URL"
-echo ""
-echo "To make this setup script executable (if you haven't already):"
-echo "  chmod +x setup_chess_ubuntu.sh"
+echo "This script assumes it is run from the root directory of your chess application's source code."
 echo ""
 echo "To run the application after successful setup:"
-echo "  cd \"$TARGET_DIR\" && ./run_chess.sh"
+echo "  cd $APP_SOURCE_DIR"
+echo "  ./run_chess.sh"
 echo ""
-echo "To update the application and Stockfish in the future, simply re-run this setup script:"
-echo "  ./setup_chess_ubuntu.sh  (if you are in $TARGET_DIR)"
-echo "  OR"
-echo "  /path/to/setup_chess_ubuntu.sh (if run from elsewhere)"
+echo "To update Python dependencies in the future (from $APP_SOURCE_DIR):"
+echo "  source $VENV_DIR_NAME/bin/activate"
+echo "  pip install --upgrade PySide6 some_other_package"
+echo "  deactivate"
 echo ""
-echo "If Stockfish download or extraction fails, check the URL or the archive structure."
-echo "The downloaded archive 'stockfish_archive.tar.gz' will be in '$STOCKFISH_DIR' for inspection in case of tar errors."
+echo "If Stockfish needs updating, you might need to manually clear $TARGET_DIR_ENV/$STOCKFISH_DIR_NAME and re-run parts of this script or download manually."
 echo "--- End of Script ---"
