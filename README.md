@@ -137,3 +137,19 @@ Once you have completed all the setup steps:
     ```
 
 This should launch the chess application's graphical user interface.
+
+## Future Plans and Limitations
+
+The current project focuses on a local GUI that uses the Stockfish engine for
+analysis.  Large scale features such as online play, tournament management,
+mobile support and built in chat are **not implemented**.  They require major
+development work beyond the scope of this repository.
+
+Possible areas for future exploration include:
+
+* Networked play over the internet or local wireless connections
+* Chat integration between players
+* Tournament brackets and multi‑player (for example 4‑player chess)
+* Dedicated Android/iOS user interfaces
+
+Contributions or forks implementing these ideas are welcome.
