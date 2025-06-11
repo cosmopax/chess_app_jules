@@ -11,6 +11,9 @@ STOCKFISH_DOWNLOAD_URL="https://stockfishchess.org/files/stockfish-macos-x86-64-
 STOCKFISH_DIR_NAME="stockfish_engine"
 STOCKFISH_INTERNAL_EXEC_NAME="stockfish_binary" # Standardized name for the exec within our env
 VENV_DIR_NAME="venv" # Name of the virtual environment directory
+GEMMA_DIR_NAME="gemma3n"
+GEMMA_MODEL_URL="https://storage.googleapis.com/gemma-models/gemma-3n.tflite"
+GEMMA_VOCAB_URL="https://storage.googleapis.com/gemma-models/gemma-3n.vocab"
 
 echo "Application Source Directory: $APP_SOURCE_DIR"
 echo "Environment Target Directory for Stockfish: $TARGET_DIR"
@@ -89,6 +92,19 @@ echo "Activating virtual environment and installing PySide6..."
 )
 echo "Python dependencies (PySide6) installed in the virtual environment."
 echo ""
+
+# --- Optional Gemma 3n Setup ---
+read -r -p "Download and install Gemma 3n model (~large download)? (y/N): " INSTALL_GEMMA
+if [[ "$INSTALL_GEMMA" =~ ^[Yy]$ ]]; then
+    echo "--- Setting up Gemma 3n ---"
+    GEMMA_PATH="$TARGET_DIR/$GEMMA_DIR_NAME"
+    mkdir -p "$GEMMA_PATH"
+    cd "$GEMMA_PATH"
+    echo "Downloading Gemma model..."
+    wget -O gemma-3n.tflite "$GEMMA_MODEL_URL" && \
+    wget -O gemma-3n.vocab "$GEMMA_VOCAB_URL" && echo "Gemma downloaded." || echo "Gemma download failed."
+    cd "$APP_SOURCE_DIR"
+fi
 
 # --- Stockfish Setup ---
 echo "--- Setting up Stockfish Chess Engine ---"
@@ -187,6 +203,13 @@ fi
 # Export for the application to use
 export STOCKFISH_ENV_PATH="\$STOCKFISH_EXEC_PATH"
 echo "STOCKFISH_ENV_PATH set to: \$STOCKFISH_ENV_PATH"
+
+GEMMA_PATH="\$TARGET_DIR_ENV/$GEMMA_DIR_NAME"
+if [ -f "\$GEMMA_PATH/gemma-3n.tflite" ]; then
+    export GEMMA3N_MODEL_PATH="\$GEMMA_PATH/gemma-3n.tflite"
+    export GEMMA3N_VOCAB_PATH="\$GEMMA_PATH/gemma-3n.vocab"
+    echo "Gemma 3n configured at \$GEMMA_PATH"
+fi
 
 APP_MAIN_SCRIPT="\$APP_SOURCE_DIR/chess_app/main.py"
 if [ ! -f "\$APP_MAIN_SCRIPT" ]; then
