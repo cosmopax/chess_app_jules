@@ -67,6 +67,16 @@ chmod +x setup_chess_ubuntu.sh
 
 After the script finishes you can start the GUI with `./run_chess.sh` from the target directory.
 
+### One-Click Install
+
+To download and install the application in a single step you can execute the installer script directly from the repository:
+
+```bash
+curl -fsSL https://example.com/install_chess_app.sh | bash
+```
+
+Replace the URL above with the raw address of this repository's `install_chess_app.sh` if using a fork.
+
 5.  **Configure the Stockfish Chess Engine (macOS):**
 
     This application uses the Stockfish chess engine for gameplay analysis and opponent moves. You need to have a Stockfish executable accessible to the application. You can download Stockfish from [https://stockfishchess.org/download/](https://stockfishchess.org/download/). Choose the appropriate version for your Mac (e.g., AVX2 or POPCNT).
@@ -137,3 +147,19 @@ Once you have completed all the setup steps:
     ```
 
 This should launch the chess application's graphical user interface.
+
+## Future Plans and Limitations
+
+The project focuses on a local GUI that uses the Stockfish engine for
+analysis.  Basic modules for online play, chat and tournament management are
+included but remain minimal examples.  Full mobile support and advanced
+network features would require substantial additional work.
+
+Possible areas for future exploration include:
+
+* Networked play over the internet or local wireless connections
+* Chat integration between players
+* Tournament brackets and multi‑player (for example 4‑player chess)
+* Dedicated Android/iOS user interfaces
+
+Contributions or forks implementing these ideas are welcome.

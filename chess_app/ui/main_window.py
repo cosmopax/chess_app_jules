@@ -28,6 +28,7 @@ import chess.svg
 import chess.polyglot
 import chess.openings
 from chess_app.ui.chess_clock import ChessClock
+from chess_app.ui.chat_window import ChatWindow
 from chess_app.openings import fetch_lichess_moves
 
 from chess_app.engine.engine_worker import EngineWorker, EngineState
@@ -247,12 +248,20 @@ class MainWindow(QMainWindow):
         tools_menu = self.menubar.addMenu("&Tools")
         explore_openings_action = QAction("Explore Openings...", self); explore_openings_action.triggered.connect(self.show_opening_explorer)
         tools_menu.addAction(explore_openings_action)
+        chat_action = QAction("Open Chat...", self)
+        chat_action.triggered.connect(self.show_chat_window)
+        tools_menu.addAction(chat_action)
         logger.debug("Menu bar created.")
 
     def show_opening_explorer(self):
         dialog = OpeningExplorerDialog(self)
         dialog.opening_selected_for_practice.connect(self.handle_setup_opening_for_practice)
         dialog.exec()
+
+    def show_chat_window(self):
+        if not hasattr(self, "_chat_window") or self._chat_window is None:
+            self._chat_window = ChatWindow(self)
+        self._chat_window.show()
 
     def new_standard_game_as_color(self, player_chosen_color: bool):
         """Starts a new standard game with the player as the chosen color."""
