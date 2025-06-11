@@ -247,12 +247,41 @@ class MainWindow(QMainWindow):
         tools_menu = self.menubar.addMenu("&Tools")
         explore_openings_action = QAction("Explore Openings...", self); explore_openings_action.triggered.connect(self.show_opening_explorer)
         tools_menu.addAction(explore_openings_action)
+        gemma_chat_action = QAction("Chat with Gemma 3n...", self)
+        gemma_chat_action.triggered.connect(self.open_gemma_chat)
+        tools_menu.addAction(gemma_chat_action)
         logger.debug("Menu bar created.")
 
     def show_opening_explorer(self):
         dialog = OpeningExplorerDialog(self)
         dialog.opening_selected_for_practice.connect(self.handle_setup_opening_for_practice)
         dialog.exec()
+
+    def open_gemma_chat(self):
+        """Open a dialog to query Gemma 3n about the current game."""
+        if not os.getenv('GEMMA3N_MODEL_PATH'):
+            QMessageBox.warning(self, "Gemma 3n", "Gemma model not configured. Set GEMMA3N_MODEL_PATH environment variable.")
+            return
+        user_text, ok = QInputDialog.getMultiLineText(self, "Chat with Gemma 3n", "Enter your question:")
+        if not ok or not user_text.strip():
+            return
+        moves = " ".join(m.uci() for m in self.board.move_stack)
+        best_move = None
+        if self.engine_worker and self.engine_worker.get_state() == EngineState.IDLE:
+            try:
+                mv = self.engine_worker.request_best_move(self.board.copy(), 0.1)
+                if mv:
+                    best_move = mv.uci()
+            except Exception:
+                pass
+        prompt = f"{user_text}\nMoves so far: {moves}\nEngine best move: {best_move if best_move else 'N/A'}"
+        try:
+            from chess_app.gemma_integration import gemma_chat
+            response = gemma_chat(prompt)
+        except Exception as exc:
+            QMessageBox.critical(self, "Gemma 3n Error", str(exc))
+            return
+        QMessageBox.information(self, "Gemma 3n", response)
 
     def new_standard_game_as_color(self, player_chosen_color: bool):
         """Starts a new standard game with the player as the chosen color."""

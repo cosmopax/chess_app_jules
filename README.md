@@ -67,6 +67,10 @@ chmod +x setup_chess_ubuntu.sh
 
 After the script finishes you can start the GUI with `./run_chess.sh` from the target directory.
 
+### Optional Gemma 3n Model
+
+The setup scripts can optionally download Google's Gemma 3n language model. If selected during installation the model files are placed inside the setup environment and the application exposes a **Chat with Gemma 3n** menu option. The model download is large, so decline the prompt if you only want the chess GUI.
+
 5.  **Configure the Stockfish Chess Engine (macOS):**
 
     This application uses the Stockfish chess engine for gameplay analysis and opponent moves. You need to have a Stockfish executable accessible to the application. You can download Stockfish from [https://stockfishchess.org/download/](https://stockfishchess.org/download/). Choose the appropriate version for your Mac (e.g., AVX2 or POPCNT).
@@ -92,6 +96,13 @@ After the script finishes you can start the GUI with `./run_chess.sh` from the t
             source ~/.zshrc  # Apply the changes to the current session
             ```
             Remember to replace `/path/to/your/stockfish` with the actual path.
+
+    *   **Gemma 3n model**
+
+        If you installed Gemma during setup, the launcher script automatically sets
+        the environment variables `GEMMA3N_MODEL_PATH` and `GEMMA3N_VOCAB_PATH`.
+        If you downloaded the model manually, set these variables yourself so the
+        "Chat with Gemma 3n" feature can locate the files.
 
     *   **Method 2: Ensuring Stockfish is in the System `PATH`**
 
