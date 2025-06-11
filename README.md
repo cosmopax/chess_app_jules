@@ -152,6 +152,25 @@ This should launch the chess application's graphical user interface.
 
 
 
+
+## PGN Database Tools
+
+The repository includes simple helpers to work with large PGN databases.  The
+`pgn_database.py` module can load games and filter them by ELO, opening name and
+winner color.  The `pgn_sources.py` module provides a `download_pgn()` function
+to download public PGN archives (for example from FIDE) in a single call.
+
+```python
+from chess_app.pgn_sources import download_pgn
+from chess_app.pgn_database import load_games, filter_games
+
+pgn_file = download_pgn("https://example.com/fide_games_2024.pgn.gz", "games.pgn")
+all_games = list(load_games(pgn_file))
+strong_games = filter_games(all_games, min_elo=2500)
+```
+
+These utilities are optional but demonstrate how to collect and query official
+game archives.
 Possible areas for future exploration include:
 
 * Networked play over the internet or local wireless connections
