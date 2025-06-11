@@ -150,10 +150,7 @@ This should launch the chess application's graphical user interface.
 
 ## Future Plans and Limitations
 
-The project focuses on a local GUI that uses the Stockfish engine for
-analysis.  Basic modules for online play, chat and tournament management are
-included but remain minimal examples.  Full mobile support and advanced
-network features would require substantial additional work.
+
 
 Possible areas for future exploration include:
 
