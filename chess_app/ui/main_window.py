@@ -423,8 +423,17 @@ class MainWindow(QMainWindow):
         if self.is_in_review_mode:
             self.status_label.setText("Status: In PGN Review. Use PGN buttons or start new game."); return
         if self.practice_opening_mainline:
-            logger.info("Click received during practice mode. Ending practice.")
-            self.end_opening_practice_mode()
+            if self.selected_square is not None and self.selected_square != sq_idx:
+                from_sq, to_sq = self.selected_square, sq_idx
+                move = chess.Move(from_sq, to_sq)
+                if move in self.board.legal_moves:
+                    if self.process_practice_move(move):
+                        self.selected_square = None
+                        self.update_board_display()
+                        return
+            self.selected_square = sq_idx if self.board.piece_at(sq_idx) and self.board.piece_at(sq_idx).color == self.player_color else None
+            self.update_board_display()
+            return
 
         if self.board.is_game_over(): self.handle_game_over(); return
         if self.board.turn != self.player_color:
@@ -502,6 +511,35 @@ class MainWindow(QMainWindow):
         self.update_practice_buttons_state()
         # Disable other interactions
         self.update_ui_elements() # This should disable analysis/engine move based on in_special_mode
+
+    def process_practice_move(self, move: chess.Move) -> bool:
+        """Validate and apply a move during opening practice.
+
+        Returns True if the move was handled as part of practice mode.
+        """
+        next_idx = self.current_practice_move_index + 1
+        if next_idx >= len(self.practice_opening_mainline):
+            return False
+
+        expected_move = self.practice_opening_mainline[next_idx]
+        if move != expected_move:
+            QMessageBox.information(self, "Incorrect Move", f"Expected {expected_move.uci()}")
+            return True
+
+        self.board.push(move)
+        self.current_practice_move_index += 1
+        self.update_practice_buttons_state()
+
+        auto_idx = self.current_practice_move_index + 1
+        if auto_idx < len(self.practice_opening_mainline) and self.board.turn != self.player_color:
+            auto_move = self.practice_opening_mainline[auto_idx]
+            self.board.push(auto_move)
+            self.current_practice_move_index += 1
+
+        if self.current_practice_move_index >= len(self.practice_opening_mainline) - 1:
+            QMessageBox.information(self, "Practice Complete", "You have finished this line!")
+            self.end_opening_practice_mode()
+        return True
 
 
     def show_previous_mainline_move(self):
