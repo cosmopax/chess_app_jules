@@ -1,8 +1,7 @@
 import sys
 import os
 import unittest
-from unittest.mock import MagicMock, patch, mock_open, call
-import importlib
+from unittest.mock import MagicMock, patch, mock_open
 
 # Ensure project modules can be imported
 current_dir = os.path.dirname(__file__)
@@ -167,7 +166,7 @@ class TestMainWindow(unittest.TestCase):
         self.reset_board_patcher = patch.object(CurrentMainWindow, 'reset_board', MagicMock(name="PatchedResetBoard"))
         self.mock_reset_board_method = self.reset_board_patcher.start()
 
-        with patch.object(sys.modules['chess'].svg, 'board', MagicMock(return_value=MagicMock(encode=MagicMock(return_value=b"<svg>test svg</svg>")))) as mock_svg_board_func, \
+        with patch.object(sys.modules['chess'].svg, 'board', MagicMock(return_value=MagicMock(encode=MagicMock(return_value=b"<svg>test svg</svg>")))), \
              patch.object(CurrentMainWindow, '_init_ui', MagicMock()), \
              patch.object(CurrentMainWindow, '_create_menu', MagicMock()), \
              patch.object(CurrentMainWindow, 'update_ui_from_engine_state', MagicMock()):
@@ -231,7 +230,7 @@ class TestMainWindow(unittest.TestCase):
 
 
         # Use patch.object for status_label specifically for this call context
-        with patch.object(self.main_window, 'status_label', MagicMock(name="status_label_runtime_patch")) as runtime_status_label_mock, \
+        with patch.object(self.main_window, 'status_label', MagicMock(name="status_label_runtime_patch")), \
              patch.object(self.main_window, 'update_ui_from_engine_state') as mock_update_ui_method_runtime: # Patching the instance method
 
             # If status_label.setText itself needs to be a distinct mock for very fine-grained assertions:
@@ -262,7 +261,7 @@ class TestMainWindow(unittest.TestCase):
             self.main_window.update_ui_from_engine_state.reset_mock()
         mock_qmessagebox.information.reset_mock()
 
-        with patch.object(self.main_window, 'status_label', MagicMock(name="status_label_stop_patch")) as stop_status_label_mock, \
+        with patch.object(self.main_window, 'status_label', MagicMock(name="status_label_stop_patch")), \
              patch.object(self.main_window, 'update_ui_from_engine_state') as mock_update_ui_method_runtime_stop:
 
             # stop_status_label_mock.setText = MagicMock(name="status_label_setText_stop_mock")

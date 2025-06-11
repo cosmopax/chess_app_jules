@@ -3,7 +3,7 @@ import os
 import types
 import time
 import unittest
-from unittest.mock import patch, MagicMock, PropertyMock
+from unittest.mock import patch, MagicMock
 
 # --- Chess Module Stub ---
 chess_stub = types.ModuleType('chess')

@@ -1,4 +1,3 @@
-import sys
 import logging
 import os # For os.path.basename in status message
 from PySide6.QtWidgets import (
@@ -19,7 +18,7 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
 )
 from PySide6.QtSvgWidgets import QSvgWidget
-from PySide6.QtCore import Qt, QTimer, Signal, Slot, QObject
+from PySide6.QtCore import Qt, QTimer, Signal, QObject
 import random
 import datetime
 import chess
@@ -28,6 +27,7 @@ import chess.svg
 import chess.polyglot
 import chess.openings
 from chess_app.ui.chess_clock import ChessClock
+from chess_app.ui.chat_window import ChatWindow
 from chess_app.openings import fetch_lichess_moves
 
 from chess_app.engine.engine_worker import EngineWorker, EngineState
@@ -175,34 +175,55 @@ class MainWindow(QMainWindow):
         self.board_display.clicked_square.connect(self.handle_square_click)
         self.layout.addWidget(self.board_display)
         self.analysis_display = QTextEdit()
-        self.analysis_display.setReadOnly(True); self.analysis_display.setFixedHeight(100)
+        self.analysis_display.setReadOnly(True)
+        self.analysis_display.setFixedHeight(100)
         self.layout.addWidget(self.analysis_display)
-        self.opening_label = QLabel("Opening: -"); self.layout.addWidget(self.opening_label)
-        self.opening_line_label = QLabel("Line: -"); self.layout.addWidget(self.opening_line_label)
-        self.lichess_moves_label = QLabel("Lichess: -"); self.layout.addWidget(self.lichess_moves_label)
-        self.white_clock_label = QLabel("White: 00:00"); self.layout.addWidget(self.white_clock_label)
-        self.black_clock_label = QLabel("Black: 00:00"); self.layout.addWidget(self.black_clock_label)
-        self.status_label = QLabel("Status: Initializing..."); self.layout.addWidget(self.status_label)
+        self.opening_label = QLabel("Opening: -")
+        self.layout.addWidget(self.opening_label)
+        self.opening_line_label = QLabel("Line: -")
+        self.layout.addWidget(self.opening_line_label)
+        self.lichess_moves_label = QLabel("Lichess: -")
+        self.layout.addWidget(self.lichess_moves_label)
+        self.white_clock_label = QLabel("White: 00:00")
+        self.layout.addWidget(self.white_clock_label)
+        self.black_clock_label = QLabel("Black: 00:00")
+        self.layout.addWidget(self.black_clock_label)
+        self.status_label = QLabel("Status: Initializing...")
+        self.layout.addWidget(self.status_label)
 
         self.button_layout = QHBoxLayout()
-        self.start_analysis_button = QPushButton("Start Analysis"); self.start_analysis_button.clicked.connect(self.toggle_analysis_clicked)
+        self.start_analysis_button = QPushButton("Start Analysis")
+        self.start_analysis_button.clicked.connect(self.toggle_analysis_clicked)
         self.button_layout.addWidget(self.start_analysis_button)
-        self.request_move_button = QPushButton("Request Engine Move"); self.request_move_button.clicked.connect(self.request_engine_move_clicked)
+        self.request_move_button = QPushButton("Request Engine Move")
+        self.request_move_button.clicked.connect(self.request_engine_move_clicked)
         self.button_layout.addWidget(self.request_move_button)
-        self.reset_board_button = QPushButton("Reset Board"); self.reset_board_button.clicked.connect(self.reset_board)
+        self.reset_board_button = QPushButton("Reset Board")
+        self.reset_board_button.clicked.connect(self.reset_board)
         self.button_layout.addWidget(self.reset_board_button)
 
-        self.prev_mainline_move_button = QPushButton("<- Prev Mainline"); self.prev_mainline_move_button.clicked.connect(self.show_previous_mainline_move)
-        self.prev_mainline_move_button.setVisible(False); self.button_layout.addWidget(self.prev_mainline_move_button)
-        self.next_mainline_move_button = QPushButton("Next Mainline ->"); self.next_mainline_move_button.clicked.connect(self.show_next_mainline_move)
-        self.next_mainline_move_button.setVisible(False); self.button_layout.addWidget(self.next_mainline_move_button)
+        self.prev_mainline_move_button = QPushButton("<- Prev Mainline")
+        self.prev_mainline_move_button.clicked.connect(self.show_previous_mainline_move)
+        self.prev_mainline_move_button.setVisible(False)
+        self.button_layout.addWidget(self.prev_mainline_move_button)
+
+        self.next_mainline_move_button = QPushButton("Next Mainline ->")
+        self.next_mainline_move_button.clicked.connect(self.show_next_mainline_move)
+        self.next_mainline_move_button.setVisible(False)
+        self.button_layout.addWidget(self.next_mainline_move_button)
         self.layout.addLayout(self.button_layout)
 
         self.pgn_button_layout = QHBoxLayout()
-        self.prev_pgn_move_button = QPushButton("<- Prev PGN Move"); self.prev_pgn_move_button.clicked.connect(self.pgn_show_previous_move)
-        self.prev_pgn_move_button.setVisible(False); self.pgn_button_layout.addWidget(self.prev_pgn_move_button)
-        self.next_pgn_move_button = QPushButton("Next PGN Move ->"); self.next_pgn_move_button.clicked.connect(self.pgn_show_next_move)
-        self.next_pgn_move_button.setVisible(False); self.pgn_button_layout.addWidget(self.next_pgn_move_button)
+        self.prev_pgn_move_button = QPushButton("<- Prev PGN Move")
+        self.prev_pgn_move_button.clicked.connect(self.pgn_show_previous_move)
+        self.prev_pgn_move_button.setVisible(False)
+        self.pgn_button_layout.addWidget(self.prev_pgn_move_button)
+
+        self.next_pgn_move_button = QPushButton("Next PGN Move ->")
+        self.next_pgn_move_button.clicked.connect(self.pgn_show_next_move)
+        self.next_pgn_move_button.setVisible(False)
+        self.pgn_button_layout.addWidget(self.next_pgn_move_button)
+
         self.layout.addLayout(self.pgn_button_layout)
         logger.debug("UI components initialized.")
 
@@ -242,17 +263,31 @@ class MainWindow(QMainWindow):
             ("&Exit", self.close)
         ]
         for name, slot in actions:
-            if name is None: file_menu.addSeparator(); continue
-            action = QAction(name, self); action.triggered.connect(slot); file_menu.addAction(action)
+            if name is None:
+                file_menu.addSeparator()
+                continue
+            action = QAction(name, self)
+            action.triggered.connect(slot)
+            file_menu.addAction(action)
         tools_menu = self.menubar.addMenu("&Tools")
-        explore_openings_action = QAction("Explore Openings...", self); explore_openings_action.triggered.connect(self.show_opening_explorer)
+        explore_openings_action = QAction("Explore Openings...", self)
+        explore_openings_action.triggered.connect(self.show_opening_explorer)
         tools_menu.addAction(explore_openings_action)
+
+        chat_action = QAction("Open Chat...", self)
+        chat_action.triggered.connect(self.show_chat_window)
+        tools_menu.addAction(chat_action)
         logger.debug("Menu bar created.")
 
     def show_opening_explorer(self):
         dialog = OpeningExplorerDialog(self)
         dialog.opening_selected_for_practice.connect(self.handle_setup_opening_for_practice)
         dialog.exec()
+
+    def show_chat_window(self):
+        if not hasattr(self, "_chat_window") or self._chat_window is None:
+            self._chat_window = ChatWindow(self)
+        self._chat_window.show()
 
     def new_standard_game_as_color(self, player_chosen_color: bool):
         """Starts a new standard game with the player as the chosen color."""
@@ -275,10 +310,15 @@ class MainWindow(QMainWindow):
         """Starts a new standard game, defaulting to player as White."""
         self.new_standard_game_as_color(chess.WHITE)
 
-    def new_chess960_random(self): self.reset_board(chess960=True) # TODO: Consider color choice for 960 too
+    def new_chess960_random(self):
+        self.reset_board(chess960=True)  # TODO: Consider color choice for 960 too
+
     def new_chess960_select(self):
-        pos, ok = QInputDialog.getInt(self, "Chess960 Position", "Enter (0-959):", 0, 0, 959, 1)
-        if ok: self.reset_board(chess960=True, start_pos=pos)
+        pos, ok = QInputDialog.getInt(
+            self, "Chess960 Position", "Enter (0-959):", 0, 0, 959, 1
+        )
+        if ok:
+            self.reset_board(chess960=True, start_pos=pos)
 
     def update_board_display(self):
         last_move = self.board.peek() if self.board.move_stack else None
@@ -288,12 +328,22 @@ class MainWindow(QMainWindow):
         self.update_opening_info()
 
     def reset_board(self, chess960: bool = False, start_pos: int | None = None):
-        logger.info(f"Resetting board. Chess960: {chess960}, Start Pos: {start_pos}")
-        if self.engine_worker and self.engine_worker.get_state() == EngineState.ANALYZING:
+        logger.info(
+            f"Resetting board. Chess960: {chess960}, Start Pos: {start_pos}"
+        )
+        if (
+            self.engine_worker
+            and self.engine_worker.get_state() == EngineState.ANALYZING
+        ):
             self.engine_worker.stop_analysis()
-        if chess960: self.board = chess.Board.from_chess960_pos(start_pos or random.randint(0, 959))
-        else: self.board.reset()
-        self.clock.reset(); self.clock.start(self.board.turn)
+        if chess960:
+            self.board = chess.Board.from_chess960_pos(
+                start_pos or random.randint(0, 959)
+            )
+        else:
+            self.board.reset()
+        self.clock.reset()
+        self.clock.start(self.board.turn)
         self.selected_square = None
         self.end_opening_practice_mode()
         self.setup_pgn_review_mode(False)
@@ -306,16 +356,25 @@ class MainWindow(QMainWindow):
 
     def load_fen(self, fen: str):
         logger.info(f"Loading FEN: {fen}")
-        try: new_board = chess.Board(fen)
-        except Exception as e: QMessageBox.warning(self, "Invalid FEN", str(e)); return
-        if self.engine_worker and self.engine_worker.get_state() == EngineState.ANALYZING: self.engine_worker.stop_analysis()
+        try:
+            new_board = chess.Board(fen)
+        except Exception as e:
+            QMessageBox.warning(self, "Invalid FEN", str(e))
+            return
+        if (
+            self.engine_worker
+            and self.engine_worker.get_state() == EngineState.ANALYZING
+        ):
+            self.engine_worker.stop_analysis()
         self.board = new_board
-        self.clock.reset(); self.clock.start(self.board.turn)
+        self.clock.reset()
+        self.clock.start(self.board.turn)
         self.selected_square = None
         self.end_opening_practice_mode()
         self.setup_pgn_review_mode(False)
         self.update_board_display()
-        self.analysis_display.clear(); self.status_label.setText("Status: Position loaded.")
+        self.analysis_display.clear()
+        self.status_label.setText("Status: Position loaded.")
         self.update_ui_from_engine_state()
 
     def new_from_fen(self):
