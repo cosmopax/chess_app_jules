@@ -3,18 +3,12 @@ import logging
 import queue
 import threading
 import time
+import sys
 import chess
 import chess.engine
 
 # This module defines the EngineWorker class which manages interactions with a UCI chess engine.
 # It runs the engine in a separate thread and communicates with it via commands.
-import enum
-import logging
-import queue
-import threading
-import time
-import chess
-import chess.engine
 
 # Configure logging for this module. The root logger is configured in main.py.
 # Standard format: %(asctime)s - %(name)s - %(levelname)s - %(message)s
@@ -453,14 +447,21 @@ if __name__ == '__main__':
     while worker.get_state() != EngineState.IDLE and worker.get_state() != EngineState.SHUTDOWN:
         main_logger.info(f"Example Main: Waiting for engine to initialize... current state: {worker.get_state()}")
         if time.time() - init_wait_start > init_timeout_seconds:
-            main_logger.error("Example Main: Timeout waiting for engine initialization.")
-            if worker: worker.quit_engine()
+            main_logger.error(
+                "Example Main: Timeout waiting for engine initialization."
+            )
+            if worker:
+                worker.quit_engine()
             sys.exit(1)
         time.sleep(0.5)
 
     if worker.get_state() == EngineState.SHUTDOWN or not worker.engine:
-        main_logger.error(f"Example Main: Engine did not initialize properly. Current state: {worker.get_state()}. Exiting.")
-        if worker: worker.quit_engine() # Attempt cleanup if worker exists
+        main_logger.error(
+            "Example Main: Engine did not initialize properly. Current state: %s. Exiting.",
+            worker.get_state(),
+        )
+        if worker:
+            worker.quit_engine()  # Attempt cleanup if worker exists
         sys.exit(1)
 
     main_logger.info(f"Example Main: Engine initialized. Current state: {worker.get_state()}")
