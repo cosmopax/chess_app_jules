@@ -67,15 +67,9 @@ chmod +x setup_chess_ubuntu.sh
 
 After the script finishes you can start the GUI with `./run_chess.sh` from the target directory.
 
-### One-Click Install
+### Optional Gemma 3n Model
 
-To download and install the application in a single step you can execute the installer script directly from the repository:
-
-```bash
-curl -fsSL https://example.com/install_chess_app.sh | bash
-```
-
-Replace the URL above with the raw address of this repository's `install_chess_app.sh` if using a fork.
+The setup scripts can optionally download Google's Gemma 3n language model. If selected during installation the model files are placed inside the setup environment and the application exposes a **Chat with Gemma 3n** menu option. The model download is large, so decline the prompt if you only want the chess GUI.
 
 5.  **Configure the Stockfish Chess Engine (macOS):**
 
@@ -102,6 +96,13 @@ Replace the URL above with the raw address of this repository's `install_chess_a
             source ~/.zshrc  # Apply the changes to the current session
             ```
             Remember to replace `/path/to/your/stockfish` with the actual path.
+
+    *   **Gemma 3n model**
+
+        If you installed Gemma during setup, the launcher script automatically sets
+        the environment variables `GEMMA3N_MODEL_PATH` and `GEMMA3N_VOCAB_PATH`.
+        If you downloaded the model manually, set these variables yourself so the
+        "Chat with Gemma 3n" feature can locate the files.
 
     *   **Method 2: Ensuring Stockfish is in the System `PATH`**
 
@@ -150,10 +151,10 @@ This should launch the chess application's graphical user interface.
 
 ## Future Plans and Limitations
 
-The project focuses on a local GUI that uses the Stockfish engine for
-analysis.  Basic modules for online play, chat and tournament management are
-included but remain minimal examples.  Full mobile support and advanced
-network features would require substantial additional work.
+The current project focuses on a local GUI that uses the Stockfish engine for
+analysis.  Large scale features such as online play, tournament management,
+mobile support and built in chat are **not implemented**.  They require major
+development work beyond the scope of this repository.
 
 Possible areas for future exploration include:
 
@@ -163,22 +164,3 @@ Possible areas for future exploration include:
 * Dedicated Android/iOS user interfaces
 
 Contributions or forks implementing these ideas are welcome.
-
-## PGN Database Tools
-
-The repository includes simple helpers to work with large PGN databases.  The
-`pgn_database.py` module can load games and filter them by ELO, opening name and
-winner color.  The `pgn_sources.py` module provides a `download_pgn()` function
-to download public PGN archives (for example from FIDE) in a single call.
-
-```python
-from chess_app.pgn_sources import download_pgn
-from chess_app.pgn_database import load_games, filter_games
-
-pgn_file = download_pgn("https://example.com/fide_games_2024.pgn.gz", "games.pgn")
-all_games = list(load_games(pgn_file))
-strong_games = filter_games(all_games, min_elo=2500)
-```
-
-These utilities are optional but demonstrate how to collect and query official
-game archives.
