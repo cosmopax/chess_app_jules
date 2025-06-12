@@ -93,8 +93,12 @@ class TestMainWindow(unittest.TestCase):
         mock_chess_module.Board = type('MockBoard', (object,), {'__module__': 'chess'})
         mock_chess_module.WHITE = True
         mock_chess_module.BLACK = False
-        mock_chess_module.PAWN = 1; mock_chess_module.KNIGHT = 2; mock_chess_module.BISHOP = 3;
-        mock_chess_module.ROOK = 4; mock_chess_module.QUEEN = 5; mock_chess_module.KING = 6;
+        mock_chess_module.PAWN = 1
+        mock_chess_module.KNIGHT = 2
+        mock_chess_module.BISHOP = 3
+        mock_chess_module.ROOK = 4
+        mock_chess_module.QUEEN = 5
+        mock_chess_module.KING = 6
         mock_chess_module.STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         mock_chess_module.Termination = MagicMock()
         mock_chess_module.Termination.CHECKMATE = "checkmate"
@@ -156,7 +160,8 @@ class TestMainWindow(unittest.TestCase):
         self.mock_chess_clock_class = self.chessclock_patch.start()
 
         MockQApplication.instance = MagicMock(return_value=None)
-        if not hasattr(sys, 'argv'): sys.argv = ['test_program']
+        if not hasattr(sys, 'argv'):
+            sys.argv = ['test_program']
 
         self.mock_engine_worker = self.mock_engine_worker_class.return_value
         self.mock_engine_worker.get_state = MagicMock(return_value=EngineState.IDLE)
