@@ -31,6 +31,7 @@ from chess_app.ui.chess_clock import ChessClock
 from chess_app.openings import fetch_lichess_moves
 
 from chess_app.engine.engine_worker import EngineWorker, EngineState
+from chess_app.ui.gemma_chat_dialog import GemmaChatDialog
 
 logger = logging.getLogger(__name__)
 
@@ -247,11 +248,22 @@ class MainWindow(QMainWindow):
         tools_menu = self.menubar.addMenu("&Tools")
         explore_openings_action = QAction("Explore Openings...", self); explore_openings_action.triggered.connect(self.show_opening_explorer)
         tools_menu.addAction(explore_openings_action)
+        gemma_chat_action = QAction("Chat with Gemma 3n...", self)
+        gemma_chat_action.triggered.connect(self.open_gemma_chat)
+        tools_menu.addAction(gemma_chat_action)
         logger.debug("Menu bar created.")
 
     def show_opening_explorer(self):
         dialog = OpeningExplorerDialog(self)
         dialog.opening_selected_for_practice.connect(self.handle_setup_opening_for_practice)
+        dialog.exec()
+
+    def open_gemma_chat(self):
+        """Open an interactive dialog to chat with Gemma 3n."""
+        if not os.getenv('GEMMA3N_MODEL_PATH'):
+            QMessageBox.warning(self, "Gemma 3n", "Gemma model not configured. Set GEMMA3N_MODEL_PATH environment variable.")
+            return
+        dialog = GemmaChatDialog(self, board=self.board, engine_worker=self.engine_worker)
         dialog.exec()
 
     def new_standard_game_as_color(self, player_chosen_color: bool):
