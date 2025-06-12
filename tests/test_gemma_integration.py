@@ -1,8 +1,10 @@
+
+import importlib
+
 import os
 import sys
 from unittest.mock import patch
 
-import importlib
 
 
 def test_gemma_chat_builds_correct_command(tmp_path):

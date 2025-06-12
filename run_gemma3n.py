@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 import argparse
+
+import os
+
 import numpy as np
+import sentencepiece as spm
 import tensorflow as tf
 from PIL import Image
-import sentencepiece as spm
-import os
+
 
 # === DEFAULTS (will be overridden by CLI or env vars) ===
 DEFAULT_MODEL = os.environ.get("GEMMA3N_MODEL_PATH", "path/to/model.tflite")

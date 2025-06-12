@@ -1,14 +1,15 @@
-import sys
-import os
 import logging
-from PySide6.QtWidgets import QApplication, QMessageBox
+import os
 
-from chess_app.ui.main_window import MainWindow
 # It's good practice to have configuration like paths managed centrally or discovered.
 # For this example, we'll define a default path for Stockfish.
 # In a real app, this might come from a config file, environment variable, or a discovery mechanism.
+import shutil  # Ensure shutil is imported
+import sys
 
-import shutil # Ensure shutil is imported
+from PySide6.QtWidgets import QApplication, QMessageBox
+
+from chess_app.ui.main_window import MainWindow
 
 # Attempt to locate Stockfish. Users might need to set STOCKFISH_ENV_PATH or have it in PATH.
 DEFAULT_STOCKFISH_PATH = "stockfish" # Assume stockfish is in PATH

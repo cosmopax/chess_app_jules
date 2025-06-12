@@ -1,8 +1,7 @@
-import sys
 import os
+import sys
 import unittest
-from unittest.mock import MagicMock, patch, mock_open, call
-import importlib
+from unittest.mock import MagicMock, mock_open, patch
 
 # Ensure project modules can be imported
 current_dir = os.path.dirname(__file__)
@@ -94,8 +93,12 @@ class TestMainWindow(unittest.TestCase):
         mock_chess_module.Board = type('MockBoard', (object,), {'__module__': 'chess'})
         mock_chess_module.WHITE = True
         mock_chess_module.BLACK = False
-        mock_chess_module.PAWN = 1; mock_chess_module.KNIGHT = 2; mock_chess_module.BISHOP = 3;
-        mock_chess_module.ROOK = 4; mock_chess_module.QUEEN = 5; mock_chess_module.KING = 6;
+        mock_chess_module.PAWN = 1
+        mock_chess_module.KNIGHT = 2
+        mock_chess_module.BISHOP = 3
+        mock_chess_module.ROOK = 4
+        mock_chess_module.QUEEN = 5
+        mock_chess_module.KING = 6
         mock_chess_module.STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         mock_chess_module.Termination = MagicMock()
         mock_chess_module.Termination.CHECKMATE = "checkmate"
@@ -121,7 +124,11 @@ class TestMainWindow(unittest.TestCase):
         sys.modules['chess.openings'] = mock_chess_module.openings
         sys.modules['chess.pgn'] = mock_chess_module.pgn
 
-        from chess_app.ui.main_window import MainWindow as ActualMainWindow, EngineState as ActualEngineState, MainWindowSignals as ActualMainWindowSignals
+        from chess_app.ui.main_window import EngineState as ActualEngineState
+        from chess_app.ui.main_window import MainWindow as ActualMainWindow
+        from chess_app.ui.main_window import (
+            MainWindowSignals as ActualMainWindowSignals,
+        )
         cls.MainWindow_class_for_patching = ActualMainWindow
         cls.MainWindowSignals_class_for_patching = ActualMainWindowSignals
         MainWindow = ActualMainWindow
@@ -157,7 +164,8 @@ class TestMainWindow(unittest.TestCase):
         self.mock_chess_clock_class = self.chessclock_patch.start()
 
         MockQApplication.instance = MagicMock(return_value=None)
-        if not hasattr(sys, 'argv'): sys.argv = ['test_program']
+        if not hasattr(sys, 'argv'):
+            sys.argv = ['test_program']
 
         self.mock_engine_worker = self.mock_engine_worker_class.return_value
         self.mock_engine_worker.get_state = MagicMock(return_value=EngineState.IDLE)
@@ -167,7 +175,7 @@ class TestMainWindow(unittest.TestCase):
         self.reset_board_patcher = patch.object(CurrentMainWindow, 'reset_board', MagicMock(name="PatchedResetBoard"))
         self.mock_reset_board_method = self.reset_board_patcher.start()
 
-        with patch.object(sys.modules['chess'].svg, 'board', MagicMock(return_value=MagicMock(encode=MagicMock(return_value=b"<svg>test svg</svg>")))) as mock_svg_board_func, \
+        with patch.object(sys.modules['chess'].svg, 'board', MagicMock(return_value=MagicMock(encode=MagicMock(return_value=b"<svg>test svg</svg>")))), \
              patch.object(CurrentMainWindow, '_init_ui', MagicMock()), \
              patch.object(CurrentMainWindow, '_create_menu', MagicMock()), \
              patch.object(CurrentMainWindow, 'update_ui_from_engine_state', MagicMock()):
@@ -231,7 +239,7 @@ class TestMainWindow(unittest.TestCase):
 
 
         # Use patch.object for status_label specifically for this call context
-        with patch.object(self.main_window, 'status_label', MagicMock(name="status_label_runtime_patch")) as runtime_status_label_mock, \
+        with patch.object(self.main_window, 'status_label', MagicMock(name="status_label_runtime_patch")), \
              patch.object(self.main_window, 'update_ui_from_engine_state') as mock_update_ui_method_runtime: # Patching the instance method
 
             # If status_label.setText itself needs to be a distinct mock for very fine-grained assertions:
@@ -262,7 +270,7 @@ class TestMainWindow(unittest.TestCase):
             self.main_window.update_ui_from_engine_state.reset_mock()
         mock_qmessagebox.information.reset_mock()
 
-        with patch.object(self.main_window, 'status_label', MagicMock(name="status_label_stop_patch")) as stop_status_label_mock, \
+        with patch.object(self.main_window, 'status_label', MagicMock(name="status_label_stop_patch")), \
              patch.object(self.main_window, 'update_ui_from_engine_state') as mock_update_ui_method_runtime_stop:
 
             # stop_status_label_mock.setText = MagicMock(name="status_label_setText_stop_mock")

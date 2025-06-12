@@ -15,8 +15,8 @@ import json
 import logging
 import urllib.parse
 import urllib.request
-import chess
 
+import chess
 
 logger = logging.getLogger(__name__)
 

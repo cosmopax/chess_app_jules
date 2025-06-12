@@ -1,9 +1,9 @@
-import sys
 import os
-import types
+import sys
 import time
+import types
 import unittest
-from unittest.mock import patch, MagicMock, PropertyMock
+from unittest.mock import MagicMock, patch
 
 # --- Chess Module Stub ---
 chess_stub = types.ModuleType('chess')
@@ -120,7 +120,7 @@ project_root = os.path.abspath(os.path.join(current_dir, ".."))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from chess_app.engine.engine_worker import EngineWorker, EngineState
+from chess_app.engine.engine_worker import EngineState, EngineWorker  # noqa: E402
 
 
 class TestEngineWorker(unittest.TestCase):
