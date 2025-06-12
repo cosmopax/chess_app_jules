@@ -1,6 +1,7 @@
 # This module defines the ChessClock class, responsible for managing game time.
+import chess  # Used for chess.WHITE and chess.BLACK constants
 from PySide6.QtCore import QObject, QTimer, Signal
-import chess # Used for chess.WHITE and chess.BLACK constants
+
 
 class ChessClock(QObject):
     """

@@ -6,7 +6,13 @@ echo "This script will help you download and set up the Chess Application."
 echo ""
 
 # --- Configuration ---
-DEFAULT_INSTALL_DIR="$HOME/MyChessApp"
+# If the current user is 'cosmopax' keep a hard coded default path
+# otherwise default to a directory under the user's HOME.
+if [ "$(whoami)" = "cosmopax" ]; then
+    DEFAULT_INSTALL_DIR="/home/cosmopax/MyChessApp"
+else
+    DEFAULT_INSTALL_DIR="$HOME/MyChessApp"
+fi
 # IMPORTANT: Replace with the actual default URL of your chess application repository
 DEFAULT_REPO_URL="https://github.com/your-username/your-chess-repo.git"
 
