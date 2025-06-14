@@ -2,6 +2,8 @@
 
 This is a chess application with a graphical user interface.
 
+For project goals and contribution guidelines see [project_directive.md](./project_directive.md).
+
 For a quick installation on macOS or Ubuntu run:
 
 ```bash
