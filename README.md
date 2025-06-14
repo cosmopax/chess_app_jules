@@ -70,7 +70,7 @@ The installer detects your operating system, clones this repository and runs the
 * **Ubuntu/Linux:** `setup_chess_ubuntu.sh`
 * **macOS:** `setup_chess_macos.sh`
 
-Both scripts clone this repository, create a Python virtual environment and automatically download the newest Stockfish engine before generating a `run_chess.sh` launcher. Edit the `APP_REPO_URL` variable inside the script to point to your fork or mirror, make the script executable and run it:
+Both scripts clone this repository, create a Python virtual environment and automatically download the newest Stockfish engine before generating a `run_chess.sh` launcher. If you want to use your own fork, either pass the repository URL when running `install_chess_app.sh` or edit the `DEFAULT_REPO_URL` variable inside that script. Then make the setup script executable and run it:
 
 ```bash
 chmod +x setup_chess_ubuntu.sh
