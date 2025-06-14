@@ -3,6 +3,7 @@ set -e # Exit immediately if a command exits with a non-zero status.
 
 echo "--- Universal Chess App Installer ---"
 echo "This script will help you download and set up the Chess Application."
+echo "It automatically fetches the newest Stockfish engine and configures the app."
 echo ""
 
 # --- Configuration ---

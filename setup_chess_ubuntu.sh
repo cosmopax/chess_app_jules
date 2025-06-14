@@ -9,7 +9,23 @@ APP_SOURCE_DIR="$(pwd)" # Assumes script is run from the root of the chess app r
 # APP_NAME_FROM_SOURCE_DIR="\$(basename "\$APP_SOURCE_DIR")" # Not used, but kept for reference
 STOCKFISH_DIR_NAME="stockfish_engine"
 STOCKFISH_INTERNAL_EXEC_NAME="stockfish_binary" # Standardized name for the exec within our env
-STOCKFISH_DOWNLOAD_URL="https://stockfishchess.org/files/stockfish-16.1-linux-x86-64.tar.gz"
+# Resolve the latest Stockfish release URL dynamically using the GitHub API.
+get_latest_stockfish_url() {
+    python3 - "$1" <<'PY'
+import json, sys, urllib.request
+os_label = sys.argv[1]
+with urllib.request.urlopen("https://api.github.com/repos/official-stockfish/Stockfish/releases/latest") as resp:
+    data = json.load(resp)
+for asset in data.get("assets", []):
+    name = asset.get("name", "").lower()
+    url = asset.get("browser_download_url")
+    if os_label == "linux" and "linux" in name and "x86" in name and (name.endswith(".tar.gz") or name.endswith(".zip") or name.endswith(".tar.zst")):
+        print(url)
+        break
+PY
+}
+
+STOCKFISH_DOWNLOAD_URL="$(get_latest_stockfish_url linux)"
 VENV_DIR_NAME="venv" # Name of the virtual environment directory
 GEMMA_DIR_NAME="gemma3n"
 GEMMA_MODEL_URL="https://storage.googleapis.com/gemma-models/gemma-3n.tflite"
