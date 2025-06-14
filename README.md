@@ -2,6 +2,12 @@
 
 This is a chess application with a graphical user interface.
 
+For a quick installation on macOS or Ubuntu run:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/your-username/chess-app/main/install_chess_app.sh)
+```
+
 ## Setup Instructions
 
 ### Prerequisites
@@ -53,12 +59,18 @@ The primary known dependency for the graphical interface is PySide6.
 
 ### Quick Setup Scripts
 
-For convenience the repository includes shell scripts that download the app and the Stockfish engine in one step.
+For convenience the repository includes shell scripts that download the app and the Stockfish engine in one step. The easiest method is to run the installer directly from GitHub:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/your-username/chess-app/main/install_chess_app.sh)
+```
+
+The installer detects your operating system, clones this repository and runs the appropriate setup script.
 
 * **Ubuntu/Linux:** `setup_chess_ubuntu.sh`
 * **macOS:** `setup_chess_macos.sh`
 
-Both scripts clone this repository, create a Python virtual environment, download a Stockfish binary and generate a `run_chess.sh` launcher. Edit the `APP_REPO_URL` variable inside the script to point to your fork or mirror, make the script executable and run it:
+Both scripts clone this repository, create a Python virtual environment and automatically download the newest Stockfish engine before generating a `run_chess.sh` launcher. Edit the `APP_REPO_URL` variable inside the script to point to your fork or mirror, make the script executable and run it:
 
 ```bash
 chmod +x setup_chess_ubuntu.sh
