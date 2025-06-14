@@ -7,7 +7,7 @@ For project goals and contribution guidelines see [project_directive.md](./proje
 For a quick installation on macOS or Ubuntu run:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/your-username/chess-app/main/install_chess_app.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/cosmopax/chess_app_jules/main/install_chess_app.sh)
 ```
 
 ## Setup Instructions
@@ -24,15 +24,15 @@ bash <(curl -fsSL https://raw.githubusercontent.com/your-username/chess-app/main
     Open your terminal or command prompt and use the following command to clone the repository to your local machine:
 
     ```bash
-    git clone https://github.com/your-username/chess-app.git
+    git clone https://github.com/cosmopax/chess_app_jules.git
     ```
 
-    Replace `https://github.com/your-username/chess-app.git` with the actual URL of this repository.
+    Replace `https://github.com/cosmopax/chess_app_jules.git` with the actual URL of this repository.
 
 2.  **Navigate to the project directory:**
 
     ```bash
-    cd chess-app
+    cd chess_app_jules
     ```
 
 3.  **Set up a Python virtual environment (recommended):**
@@ -64,7 +64,7 @@ The primary known dependency for the graphical interface is PySide6.
 For convenience the repository includes shell scripts that download the app and the Stockfish engine in one step. The easiest method is to run the installer directly from GitHub:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/your-username/chess-app/main/install_chess_app.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/cosmopax/chess_app_jules/main/install_chess_app.sh)
 ```
 
 The installer detects your operating system, clones this repository and runs the appropriate setup script.
@@ -146,9 +146,9 @@ Once you have completed all the setup steps:
 
 1.  **Navigate to the project's root directory** (if you're not already there):
     ```bash
-    cd path/to/chess-app
+    cd path/to/chess_app_jules
     ```
-    (Replace `path/to/chess-app` with the actual path if you named the directory differently or are not in its parent directory). If you followed the previous steps, you might already be in this directory (`chess-app`).
+    (Replace `path/to/chess_app_jules` with the actual path if you named the directory differently or are not in its parent directory). If you followed the previous steps, you might already be in this directory (`chess_app_jules`).
 
 2.  **Activate your virtual environment** (if you created one):
     ```bash
