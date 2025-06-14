@@ -1,5 +1,6 @@
 # Project Directive
 
+
 This repository hosts a cross‑platform chess application with an integrated **Openings Mentor** and optional language model features. The code should remain easy to install on macOS and Ubuntu and work offline by default.
 
 ## Goals
@@ -43,6 +44,8 @@ This repository hosts a cross‑platform chess application with an integrated **
 - Enforce code style with `flake8` and `black --check`.
 - Adhere to semantic versioning for releases.
 
+#Run `pytest -q` before committing changes.
+
 ## Testing & CI/CD
 
 - Automated test suite covers PGN parsing, engine integration, training algorithms, GUI workflows and LLM interactions.
@@ -54,4 +57,7 @@ This repository hosts a cross‑platform chess application with an integrated **
 - Mobile interfaces (PySide6/QML or standalone Electron/React Native builds).
 - Cloud sync and cross‑device repertoire sharing.
 - Enhanced analytics dashboard and community opening database integration.
+
+
+Future expansions may include online play, tournament management and mobile interfaces. These are out of scope for now but contributions exploring them are welcome.
 
