@@ -24,10 +24,8 @@ bash <(curl -fsSL https://raw.githubusercontent.com/your-username/chess-app/main
     Open your terminal or command prompt and use the following command to clone the repository to your local machine:
 
     ```bash
-    git clone https://github.com/your-username/chess-app.git
+    git clone https://github.com/cosmopax/chess-app.git
     ```
-
-    Replace `https://github.com/your-username/chess-app.git` with the actual URL of this repository.
 
 2.  **Navigate to the project directory:**
 
@@ -64,7 +62,7 @@ The primary known dependency for the graphical interface is PySide6.
 For convenience the repository includes shell scripts that download the app and the Stockfish engine in one step. The easiest method is to run the installer directly from GitHub:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/your-username/chess-app/main/install_chess_app.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/cosmopax/chess-app/main/install_chess_app.sh)
 ```
 
 The installer detects your operating system, clones this repository and runs the appropriate setup script.
