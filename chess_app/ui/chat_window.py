@@ -26,4 +26,3 @@ class ChatWindow(QDialog):
             return
         self.messages.append(f"You: {text}")
         self.input_line.clear()
-

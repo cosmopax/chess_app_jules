@@ -298,16 +298,16 @@ class MainWindow(QMainWindow):
         explore_openings_action.triggered.connect(self.show_opening_explorer)
         tools_menu.addAction(explore_openings_action)
 
-#
+        #
         chat_action = QAction("Open Chat...", self)
         chat_action.triggered.connect(self.show_chat_window)
         tools_menu.addAction(chat_action)
-#
+        #
         gemma_chat_action = QAction("Chat with Gemma 3n...", self)
         gemma_chat_action.triggered.connect(self.open_gemma_chat)
         tools_menu.addAction(gemma_chat_action)
-#
-      
+        #
+
         logger.debug("Menu bar created.")
 
     def show_opening_explorer(self):
@@ -317,7 +317,6 @@ class MainWindow(QMainWindow):
         )
         dialog.exec()
 
-
     def show_chat_window(self):
         if not hasattr(self, "_chat_window") or self._chat_window is None:
             self._chat_window = ChatWindow(self)
@@ -325,10 +324,16 @@ class MainWindow(QMainWindow):
 
     def open_gemma_chat(self):
         """Open a dialog to query Gemma 3n about the current game."""
-        if not os.getenv('GEMMA3N_MODEL_PATH'):
-            QMessageBox.warning(self, "Gemma 3n", "Gemma model not configured. Set GEMMA3N_MODEL_PATH environment variable.")
+        if not os.getenv("GEMMA3N_MODEL_PATH"):
+            QMessageBox.warning(
+                self,
+                "Gemma 3n",
+                "Gemma model not configured. Set GEMMA3N_MODEL_PATH environment variable.",
+            )
             return
-        user_text, ok = QInputDialog.getMultiLineText(self, "Chat with Gemma 3n", "Enter your question:")
+        user_text, ok = QInputDialog.getMultiLineText(
+            self, "Chat with Gemma 3n", "Enter your question:"
+        )
         if not ok or not user_text.strip():
             return
         moves = " ".join(m.uci() for m in self.board.move_stack)
@@ -343,12 +348,12 @@ class MainWindow(QMainWindow):
         prompt = f"{user_text}\nMoves so far: {moves}\nEngine best move: {best_move if best_move else 'N/A'}"
         try:
             from chess_app.gemma_integration import gemma_chat
+
             response = gemma_chat(prompt)
         except Exception as exc:
             QMessageBox.critical(self, "Gemma 3n Error", str(exc))
             return
         QMessageBox.information(self, "Gemma 3n", response)
-
 
     def new_standard_game_as_color(self, player_chosen_color: bool):
         """Starts a new standard game with the player as the chosen color."""

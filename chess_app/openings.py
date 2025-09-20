@@ -52,4 +52,3 @@ def fetch_lichess_moves(board: chess.Board, max_moves: int = 8) -> list[dict] | 
     except Exception as exc:  # pragma: no cover - network failures
         logger.debug("Lichess opening lookup failed: %s", exc)
         return None
-

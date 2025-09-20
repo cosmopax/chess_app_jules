@@ -44,4 +44,3 @@ class Tournament:
                 scores[p1] += 0.5
                 scores[p2] += 0.5
         return scores
-

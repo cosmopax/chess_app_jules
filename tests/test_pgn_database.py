@@ -40,4 +40,3 @@ def test_filter_games(tmp_path):
     filt = filter_games(games, min_elo=2200, winner_color="white")
     assert len(filt) == 1
     assert filt[0].headers["Opening"] == "Sicilian Defense"
-

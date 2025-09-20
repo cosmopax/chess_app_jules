@@ -7,7 +7,23 @@ echo "--- Chess App Setup Script for macOS ---"
 TARGET_DIR="$HOME/chess_app_env" # Renamed to avoid conflict if app is also named chess_app
 APP_SOURCE_DIR="$(pwd)" # Assumes script is run from the root of the chess app repo
 # APP_NAME_FROM_SOURCE_DIR="\$(basename "\$APP_SOURCE_DIR")" # Not used, but kept for reference
-STOCKFISH_DOWNLOAD_URL="https://stockfishchess.org/files/stockfish-macos-x86-64-modern.zip" # Direct link
+# Determine the latest Stockfish release URL automatically from GitHub
+get_latest_stockfish_url() {
+    python3 - "$1" <<'PY'
+import json, sys, urllib.request
+os_label = sys.argv[1]
+with urllib.request.urlopen("https://api.github.com/repos/official-stockfish/Stockfish/releases/latest") as resp:
+    data = json.load(resp)
+for asset in data.get("assets", []):
+    name = asset.get("name", "").lower()
+    url = asset.get("browser_download_url")
+    if os_label == "macos" and "mac" in name and "x86" in name and name.endswith(".zip"):
+        print(url)
+        break
+PY
+}
+
+STOCKFISH_DOWNLOAD_URL="$(get_latest_stockfish_url macos)"
 STOCKFISH_DIR_NAME="stockfish_engine"
 STOCKFISH_INTERNAL_EXEC_NAME="stockfish_binary" # Standardized name for the exec within our env
 VENV_DIR_NAME="venv" # Name of the virtual environment directory

@@ -15,4 +15,3 @@ def test_tournament_standings():
     scores = t.standings()
     assert scores["A"] == 1
     assert scores["B"] == 0
-

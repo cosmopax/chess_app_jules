@@ -2,6 +2,20 @@
 
 This is a chess application with a graphical user interface.
 
+For project goals and contribution guidelines see [project_directive.md](./project_directive.md).
+
+For a quick installation on macOS or Ubuntu run the installer directly:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/cosmopax/chess_app_jules/main/install_chess_app.sh)
+```
+
+Add `-y` to accept defaults and skip prompts:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/cosmopax/chess_app_jules/main/install_chess_app.sh) -y
+```
+
 ## Setup Instructions
 
 ### Prerequisites
@@ -16,15 +30,15 @@ This is a chess application with a graphical user interface.
     Open your terminal or command prompt and use the following command to clone the repository to your local machine:
 
     ```bash
-    git clone https://github.com/your-username/chess-app.git
+    git clone https://github.com/cosmopax/chess_app_jules.git
     ```
 
-    Replace `https://github.com/your-username/chess-app.git` with the actual URL of this repository.
+    Replace `https://github.com/cosmopax/chess_app_jules.git` with the actual URL of this repository.
 
 2.  **Navigate to the project directory:**
 
     ```bash
-    cd chess-app
+    cd chess_app_jules
     ```
 
 3.  **Set up a Python virtual environment (recommended):**
@@ -53,12 +67,24 @@ The primary known dependency for the graphical interface is PySide6.
 
 ### Quick Setup Scripts
 
-For convenience the repository includes shell scripts that download the app and the Stockfish engine in one step.
+For convenience the repository includes shell scripts that download the app and the Stockfish engine in one step. Run the installer directly from GitHub:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/cosmopax/chess_app_jules/main/install_chess_app.sh)
+```
+
+Use `-y` for a fully automated install with default options:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/cosmopax/chess_app_jules/main/install_chess_app.sh) -y
+```
+
+The installer detects your operating system, clones this repository and runs the appropriate setup script.
 
 * **Ubuntu/Linux:** `setup_chess_ubuntu.sh`
 * **macOS:** `setup_chess_macos.sh`
 
-Both scripts clone this repository, create a Python virtual environment, download a Stockfish binary and generate a `run_chess.sh` launcher. Edit the `APP_REPO_URL` variable inside the script to point to your fork or mirror, make the script executable and run it:
+Both scripts clone this repository, create a Python virtual environment and automatically download the newest Stockfish engine before generating a `run_chess.sh` launcher. If you want to use your own fork, either pass the repository URL when running `install_chess_app.sh` or edit the `DEFAULT_REPO_URL` variable inside that script. Then make the setup script executable and run it:
 
 ```bash
 chmod +x setup_chess_ubuntu.sh
@@ -104,6 +130,10 @@ The setup scripts can optionally download Google's Gemma 3n language model. If s
         If you downloaded the model manually, set these variables yourself so the
         "Chat with Gemma 3n" feature can locate the files.
 
+### Openings Mentor and Training
+
+The application includes a basic **Openings Mentor** for learning chess openings. A spaced-repetition scheduler implemented in `chess_app.srs` helps plan review sessions using the SM-2 algorithm. The helper `due_items` returns cards that are due for practice. Items can be stored using `save_items` and restored with `load_items`. Future versions will expand the database of openings and integrate interactive drills.
+
     *   **Method 2: Ensuring Stockfish is in the System `PATH`**
 
         If Stockfish is in a directory that's part of your system's `PATH` environment variable, the application should find it automatically.
@@ -132,9 +162,9 @@ Once you have completed all the setup steps:
 
 1.  **Navigate to the project's root directory** (if you're not already there):
     ```bash
-    cd path/to/chess-app
+    cd path/to/chess_app_jules
     ```
-    (Replace `path/to/chess-app` with the actual path if you named the directory differently or are not in its parent directory). If you followed the previous steps, you might already be in this directory (`chess-app`).
+    (Replace `path/to/chess_app_jules` with the actual path if you named the directory differently or are not in its parent directory). If you followed the previous steps, you might already be in this directory (`chess_app_jules`).
 
 2.  **Activate your virtual environment** (if you created one):
     ```bash
@@ -148,6 +178,29 @@ Once you have completed all the setup steps:
     ```
 
 This should launch the chess application's graphical user interface.
+
+## Development Setup
+
+For running tests and style checks a helper script sets up a separate
+virtual environment with development tools. It installs `flake8`,
+`black` and `pytest` so you can run the project's checks locally:
+
+```bash
+./install.sh
+```
+
+The script uses `pip` to fetch development dependencies. Ensure your
+environment has internet access or manually install the packages if
+any tool (such as `flake8`) is missing after installation.
+
+Activate it with:
+
+```bash
+source dev_venv/bin/activate
+```
+
+The environment installs `flake8`, `black` and `pytest` so you can run the
+project's checks locally.
 
 ## Future Plans and Limitations
 

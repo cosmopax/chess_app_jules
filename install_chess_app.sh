@@ -2,8 +2,20 @@
 set -e # Exit immediately if a command exits with a non-zero status.
 
 echo "--- Universal Chess App Installer ---"
-echo "This script will help you download and set up the Chess Application."
+echo "This script downloads and sets up the Chess Application"
+echo "including the newest Stockfish engine."
 echo ""
+
+# Optional non-interactive mode. Use -y or --yes to skip prompts
+NON_INTERACTIVE=0
+for arg in "$@"; do
+    case "$arg" in
+        -y|--yes)
+            NON_INTERACTIVE=1
+            shift
+            ;;
+    esac
+done
 
 # --- Configuration ---
 # If the current user is 'cosmopax' keep a hard coded default path
@@ -14,7 +26,7 @@ else
     DEFAULT_INSTALL_DIR="$HOME/MyChessApp"
 fi
 # IMPORTANT: Replace with the actual default URL of your chess application repository
-DEFAULT_REPO_URL="https://github.com/your-username/your-chess-repo.git"
+DEFAULT_REPO_URL="https://github.com/cosmopax/chess_app_jules.git"
 
 # --- OS Detection ---
 OS_TYPE=""
@@ -38,11 +50,19 @@ echo "Detected Operating System: $OS_TYPE"
 echo ""
 
 # --- User Input ---
-read -r -p "Enter the Git repository URL for the Chess App (default: $DEFAULT_REPO_URL): " REPO_URL
-REPO_URL=${REPO_URL:-$DEFAULT_REPO_URL} # Use default if empty
+if [ "$NON_INTERACTIVE" -eq 1 ]; then
+    REPO_URL="$DEFAULT_REPO_URL"
+else
+    read -r -p "Enter the Git repository URL for the Chess App (default: $DEFAULT_REPO_URL): " REPO_URL
+    REPO_URL=${REPO_URL:-$DEFAULT_REPO_URL}
+fi
 
-read -r -p "Enter the directory where you want to install the Chess App (default: $DEFAULT_INSTALL_DIR): " INSTALL_DIR
-INSTALL_DIR=${INSTALL_DIR:-$DEFAULT_INSTALL_DIR}
+if [ "$NON_INTERACTIVE" -eq 1 ]; then
+    INSTALL_DIR="$DEFAULT_INSTALL_DIR"
+else
+    read -r -p "Enter the directory where you want to install the Chess App (default: $DEFAULT_INSTALL_DIR): " INSTALL_DIR
+    INSTALL_DIR=${INSTALL_DIR:-$DEFAULT_INSTALL_DIR}
+fi
 
 # Expand INSTALL_DIR path (e.g., if ~ is used by user)
 INSTALL_DIR_EXPANDED=$(eval echo "$INSTALL_DIR")
@@ -53,10 +73,14 @@ echo "Repository URL: $REPO_URL"
 echo "Installation Directory: $INSTALL_DIR_EXPANDED"
 echo ""
 
-read -r -p "Proceed with installation? (y/n): " CONFIRM
-if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
-    echo "Installation cancelled by user."
-    exit 0
+if [ "$NON_INTERACTIVE" -eq 1 ]; then
+    CONFIRM="y"
+else
+    read -r -p "Proceed with installation? (y/n): " CONFIRM
+    if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+        echo "Installation cancelled by user."
+        exit 0
+    fi
 fi
 echo ""
 
@@ -75,13 +99,18 @@ echo ""
 echo "--- Starting Installation ---"
 if [ -d "$INSTALL_DIR_EXPANDED" ]; then
     echo "Warning: Installation directory '$INSTALL_DIR_EXPANDED' already exists."
-    read -r -p "Do you want to remove it and continue? (y/n) THIS IS DESTRUCTIVE: " OVERWRITE_CONFIRM
-    if [[ "$OVERWRITE_CONFIRM" =~ ^[Yy]$ ]]; then
-        echo "Removing existing directory: $INSTALL_DIR_EXPANDED"
+    if [ "$NON_INTERACTIVE" -eq 1 ]; then
+        echo "Non-interactive mode: removing existing directory."
         rm -rf "$INSTALL_DIR_EXPANDED"
     else
-        echo "Installation aborted. Please choose a different directory or manually remove the existing one."
-        exit 1
+        read -r -p "Do you want to remove it and continue? (y/n) THIS IS DESTRUCTIVE: " OVERWRITE_CONFIRM
+        if [[ "$OVERWRITE_CONFIRM" =~ ^[Yy]$ ]]; then
+            echo "Removing existing directory: $INSTALL_DIR_EXPANDED"
+            rm -rf "$INSTALL_DIR_EXPANDED"
+        else
+            echo "Installation aborted. Please choose a different directory or manually remove the existing one."
+            exit 1
+        fi
     fi
 fi
 

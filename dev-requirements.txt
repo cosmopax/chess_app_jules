@@ -1,0 +1,6 @@
+PySide6
+python-chess
+SQLAlchemy
+flake8
+black
+pytest

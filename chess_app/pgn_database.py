@@ -59,4 +59,3 @@ def filter_games(
             continue
         filtered.append(game)
     return filtered
-

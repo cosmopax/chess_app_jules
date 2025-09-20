@@ -35,4 +35,3 @@ def receive_move(sock: socket.socket) -> str:
             break
         data += chunk
     return data.decode("utf-8").strip()
-

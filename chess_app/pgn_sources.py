@@ -8,7 +8,7 @@ from urllib.request import urlopen
 def download_pgn(url: str, dest_path: str) -> str:
     """Download a PGN file from a URL. Supports optional gzip compression."""
     dest = Path(dest_path)
-    if url.endswith('.gz'):
+    if url.endswith(".gz"):
         with urlopen(url) as response, gzip.open(response) as gz:
             dest.write_bytes(gz.read())
     else:
