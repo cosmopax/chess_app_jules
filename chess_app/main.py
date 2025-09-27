@@ -46,8 +46,10 @@ def find_stockfish_path():
         if which_path and os.access(which_path, os.X_OK):
             logger.info(f"Found executable Stockfish in PATH via shutil.which: {which_path} (will use command '{DEFAULT_STOCKFISH_PATH}')")
             return DEFAULT_STOCKFISH_PATH # Return the command, not the full path, as Popen handles PATH
+        elif which_path is None:
+            logger.warning(f"shutil.which did not find '{DEFAULT_STOCKFISH_PATH}' in system PATH.")
         else:
-            logger.warning(f"shutil.which found '{DEFAULT_STOCKFISH_PATH}' at '{which_path}', but it's not executable or invalid.")
+            logger.warning(f"shutil.which found '{DEFAULT_STOCKFISH_PATH}' at '{which_path}', but it's not executable.")
     except ImportError:
         logger.warning("shutil.which is not available (requires Python 3.3+). Cannot verify Stockfish in PATH here.")
 
