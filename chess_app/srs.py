@@ -68,7 +68,11 @@ def due_items(items: Iterable[SRSItem], today: date | None = None) -> List[SRSIt
 
 def save_items(items: Iterable[SRSItem], path: str | Path) -> None:
     """Save items to *path* in JSON format."""
-    data = [asdict(item) | {"due": item.due.isoformat()} for item in items]
+    data = []
+    for item in items:
+        d = asdict(item)
+        d["due"] = item.due.isoformat()
+        data.append(d)
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(data, fh, indent=2)
 
