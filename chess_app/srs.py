@@ -79,12 +79,16 @@ def load_items(path: str | Path) -> List[SRSItem]:
         raw = json.load(fh)
     items = []
     for entry in raw:
-        due = date.fromisoformat(entry["due"])
-        item = SRSItem(
-            easiness=entry.get("easiness", 2.5),
-            interval=entry.get("interval", 0),
-            repetitions=entry.get("repetitions", 0),
-            due=due,
-        )
-        items.append(item)
+        try:
+            due = date.fromisoformat(entry["due"])
+            item = SRSItem(
+                easiness=entry.get("easiness", 2.5),
+                interval=entry.get("interval", 0),
+                repetitions=entry.get("repetitions", 0),
+                due=due,
+            )
+            items.append(item)
+        except (KeyError, ValueError):
+            # Optionally, you could log a warning here about the malformed entry.
+            continue
     return items
