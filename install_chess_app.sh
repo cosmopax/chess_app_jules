@@ -14,8 +14,8 @@ if [ "$(whoami)" = "cosmopax" ]; then
 else
     DEFAULT_INSTALL_DIR="$HOME/MyChessApp"
 fi
-# IMPORTANT: Replace with the actual default URL of your chess application repository
-DEFAULT_REPO_URL="https://github.com/your-username/your-chess-repo.git"
+# Default repository containing this installer
+DEFAULT_REPO_URL="https://github.com/cosmopax/chess_app_jules.git"
 
 # --- OS Detection ---
 OS_TYPE=""

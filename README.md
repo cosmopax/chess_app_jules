@@ -7,7 +7,7 @@ For project goals and contribution guidelines see [project_directive.md](./proje
 For a quick installation on macOS or Ubuntu run:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/cosmopax/chess-app/main/install_chess_app.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/cosmopax/chess_app_jules/main/install_chess_app.sh)
 ```
 
 ## Setup Instructions
@@ -144,9 +144,9 @@ Once you have completed all the setup steps:
 
 1.  **Navigate to the project's root directory** (if you're not already there):
     ```bash
-    cd path/to/chess-app
+    cd path/to/chess_app_jules
     ```
-    (Replace `path/to/chess-app` with the actual path if you named the directory differently or are not in its parent directory). If you followed the previous steps, you might already be in this directory (`chess-app`).
+    (Replace `path/to/chess_app_jules` with the actual path if you named the directory differently or are not in its parent directory). If you followed the previous steps, you might already be in this directory (`chess_app_jules`).
 
 2.  **Activate your virtual environment** (if you created one):
     ```bash
