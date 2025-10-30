@@ -1,0 +1,12 @@
+must_read:
+  - instructions.md
+  - vision.md
+  - roadmap.md
+  - status.md
+  - issues.md
+update_rules:
+  - when: "code_changes"
+    require:
+      - "append log.md"
+      - "refresh status.md if state changed"
+      - "reference roadmap section"

@@ -1,0 +1,13 @@
+name: Ensure Docs & Policy
+on:
+  push:
+    paths-ignore: [".github/workflows/ensure-docs.yaml"]
+  pull_request:
+  schedule:
+    - cron: "13 4 * * 1"
+  workflow_dispatch:
+jobs:
+  call:
+    uses: ${{ github.repository_owner }}/agent-hub/.github/workflows/ensure-docs-reusable.yaml@main
+    with:
+      contact_email: ""
